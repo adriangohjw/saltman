@@ -8,6 +8,10 @@ jobs:
   test:
     name: "🔬 Test Saltman Action"
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+      issues: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

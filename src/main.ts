@@ -67,18 +67,55 @@ async function run(): Promise<void> {
     }
 
     // Fetch PR details (we know prNumber is defined here due to the check above)
-    const { data: pr } = await octokit.rest.pulls.get({
-      owner,
-      repo,
-      pull_number: prNumber!,
-    });
+    let pr;
+    try {
+      const response = await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: prNumber!,
+      });
+      pr = response.data;
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Resource not accessible by integration")
+      ) {
+        core.setFailed(
+          "Permission denied: The GitHub token does not have sufficient permissions. " +
+            "Please ensure the workflow has 'pull-requests: read' permission. " +
+            "Add this to your workflow:\n" +
+            "permissions:\n" +
+            "  pull-requests: write\n" +
+            "  contents: read\n" +
+            "  issues: write",
+        );
+        return;
+      }
+      throw error;
+    }
 
     // Fetch PR files
-    const { data: files } = await octokit.rest.pulls.listFiles({
-      owner,
-      repo,
-      pull_number: prNumber!,
-    });
+    let files;
+    try {
+      const response = await octokit.rest.pulls.listFiles({
+        owner,
+        repo,
+        pull_number: prNumber!,
+      });
+      files = response.data;
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Resource not accessible by integration")
+      ) {
+        core.setFailed(
+          "Permission denied: The GitHub token does not have sufficient permissions to list PR files. " +
+            "Please ensure the workflow has 'pull-requests: read' permission.",
+        );
+        return;
+      }
+      throw error;
+    }
 
     // Process/analyze PR content
     const analysis = analyzePR(pr, files);
