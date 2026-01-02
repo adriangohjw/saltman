@@ -1,0 +1,25 @@
+name: 'Saltman'
+description: 'Analyzes PR content and posts results as a comment'
+inputs:
+  github-token:
+    description: 'GitHub token for API access'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+    - name: Install dependencies
+      shell: bash
+      run: bun install
+    - name: Build
+      shell: bash
+      run: bun run build
+    - name: Run action
+      shell: bash
+      run: bun dist/main.js
+      env:
+        INPUT_GITHUB-TOKEN: ${{ inputs.github-token }}
+
