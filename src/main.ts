@@ -39,7 +39,10 @@ async function run(): Promise<void> {
         username,
       });
 
-      const hasWriteAccess = permission.permission === "write" || permission.permission === "admin";
+      const hasWriteAccess =
+        permission.permission === "write" ||
+        permission.permission === "maintain" ||
+        permission.permission === "admin";
 
       if (!hasWriteAccess) {
         core.info(
