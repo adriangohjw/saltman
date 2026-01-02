@@ -1,38 +1,47 @@
-name: 'Test Action'
+name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
-    types: [opened, synchronize]
+    branches: [main]
 
 jobs:
-  test:
+  format:
+    name: "🧹 Format"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
+      - name: Setup
+        uses: ./tooling/github/setup
 
-      - name: Install dependencies
-        run: bun install
-
-      - name: Lint
-        run: bun run lint
-
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Format check
+      - name: Run formatting
         run: bun run format
 
-      - name: Build
-        run: bun run build
+  lint:
+    name: "🧹 Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Run action
-        uses: ./
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup
+        uses: ./tooling/github/setup
 
+      - name: Run linting
+        run: bun run lint
+
+  typecheck:
+    name: "🔎 Typecheck"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Run type checking
+        run: bun run typecheck
