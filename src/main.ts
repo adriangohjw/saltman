@@ -21,13 +21,8 @@ async function run(): Promise<void> {
       // PR event - check PR author
       prNumber = context.payload.pull_request.number;
       username = context.payload.pull_request.user.login;
-    } else if (context.eventName === "push") {
-      // Push event - check the actor who triggered the workflow
-      username = context.actor;
-      // For push events, we might not have a PR number
-      core.info(`Checking permissions for push event by ${username}`);
     } else {
-      core.setFailed("This action must be run on a pull request or push event");
+      core.setFailed("This action must be run on a pull request event");
       return;
     }
 
@@ -64,13 +59,7 @@ async function run(): Promise<void> {
       throw error;
     }
 
-    // If this is not a PR event, we can't proceed with PR analysis
-    if (!prNumber) {
-      core.info("Push event detected but PR analysis requires a pull request. Skipping.");
-      return;
-    }
-
-    // Fetch PR details (we know prNumber is defined here due to the check above)
+    // Fetch PR details (we know prNumber is defined here since we validated it above)
     let pr;
     try {
       const response = await octokit.rest.pulls.get({
