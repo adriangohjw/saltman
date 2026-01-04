@@ -24,7 +24,10 @@ ${SALTMAN_FOOTER}`;
     });
 
     // Convert file changes to a single diff string
-    const diff = filesWithPatches.map((file: FileChange) => file.patch).join("\n\n---\n\n");
+    // Include filename so LLM knows which file each diff belongs to
+    const diff = filesWithPatches
+      .map((file: FileChange) => `--- a/${file.filename}\n+++ b/${file.filename}\n${file.patch}`)
+      .join("\n\n");
 
     const response = await openai.responses.parse({
       model: "gpt-5.1-codex-mini",
