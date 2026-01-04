@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { formatErrorResponse, formatReviewResponse } from "./responses/format";
+import { formatReviewResponse } from "./responses/format";
 import { SALTMAN_FOOTER } from "./responses/shared";
 import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema, getReviewSchema } from "./types";
@@ -78,8 +78,7 @@ ${SALTMAN_FOOTER}`;
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`OpenAI API error: ${errorMessage}`);
 
-    // Re-throw to allow caller to handle, but also return formatted error
-    // This maintains backward compatibility
-    return formatErrorResponse({ errorMessage });
+    // Re-throw the error so CI fails when there's an API error
+    throw error;
   }
 };
