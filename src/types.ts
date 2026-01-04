@@ -13,6 +13,23 @@ export interface AnalyzePRProps {
   apiKey: string;
 }
 
+const LocationSchema = z
+  .object({
+    file: z
+      .string()
+      .describe("File path where the issue is located (from the diff, e.g., 'src/file.ts')"),
+    startLine: z.number().int().positive().optional().describe("Starting line number (1-indexed)"),
+    endLine: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe("Ending line number (1-indexed, only if issue spans multiple lines)"),
+  })
+  .nullable()
+  .optional()
+  .describe("Location of the issue in the codebase");
+
 export const ReviewIssueSchema = z.object({
   title: z.string().describe("Concise title for the issue (3-8 words)"),
   type: z.enum(["bug", "security", "performance"]).describe("Type of issue"),
@@ -27,16 +44,7 @@ export const ReviewIssueSchema = z.object({
     .describe(
       "More detailed but succinct explanation of the issue, why it matters, and its impact (straight-to-the-point, will be shown in a dropdown)",
     ),
-  file: z
-    .string()
-    .nullable()
-    .optional()
-    .describe("File path where the issue is located (from the diff, e.g., 'src/file.ts')"),
-  line: z
-    .string()
-    .nullable()
-    .optional()
-    .describe("Line number if applicable (can be a single number or range, e.g., '42' or '42-45')"),
+  location: LocationSchema,
   suggestion: z.string().nullable().optional().describe("Helpful suggestion for fixing the issue"),
 });
 

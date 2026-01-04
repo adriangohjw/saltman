@@ -41,17 +41,26 @@ const buildFilePermalink = (
   repo: string,
   headSha: string,
   file: string,
-  line?: string | null,
+  startLine?: number,
+  endLine?: number,
 ): string => {
   const baseUrl = `https://github.com/${owner}/${repo}/blob/${headSha}/${file}`;
-  if (line) {
-    // Try to parse line number - could be a single number or range
-    const lineNum = line.match(/^\d+/)?.[0];
-    if (lineNum) {
-      return `${baseUrl}#L${lineNum}`;
+  if (startLine) {
+    if (endLine && endLine > startLine) {
+      return `${baseUrl}#L${startLine}-L${endLine}`;
+    } else {
+      return `${baseUrl}#L${startLine}`;
     }
   }
   return baseUrl;
+};
+
+// Format line numbers for display (e.g., "42" or "42-45")
+const formatLineForDisplay = (startLine: number, endLine?: number): string => {
+  if (endLine && endLine > startLine) {
+    return `${startLine}-${endLine}`;
+  }
+  return `${startLine}`;
 };
 
 export const formatReviewResponse = ({
@@ -68,16 +77,16 @@ export const formatReviewResponse = ({
       output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
       output += `**Type:** ${getTypeLabel(issue.type)} | **Severity:** ${issue.severity}\n\n`;
 
-      // File and line reference with permalink
-      if (issue.file) {
-        const permalink = buildFilePermalink(owner, repo, headSha, issue.file, issue.line);
-        if (issue.line) {
-          output += `**Location:** [\`${issue.file}:${issue.line}\`](${permalink})\n\n`;
+      // File and line reference with permalink (GitHub will auto-embed code snippet)
+      if (issue.location?.file) {
+        const { file, startLine, endLine } = issue.location;
+        const permalink = buildFilePermalink(owner, repo, headSha, file, startLine, endLine);
+        if (startLine) {
+          const displayLine = formatLineForDisplay(startLine, endLine);
+          output += `**Location:** \`${file}:${displayLine}\`\n\n${permalink}\n\n`;
         } else {
-          output += `**Location:** [\`${issue.file}\`](${permalink})\n\n`;
+          output += `**Location:** \`${file}\`\n\n${permalink}\n\n`;
         }
-      } else if (issue.line) {
-        output += `**Line:** ${issue.line}\n\n`;
       }
 
       // Brief description (visible by default)
