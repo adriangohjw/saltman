@@ -181,11 +181,10 @@ export const formatReviewResponse = ({
   repo,
   headSha,
 }: FormatReviewResponseProps): string => {
-  let output = ``;
+  let output = `## Saltman Code Review\n\n`;
 
   // Issues
   if (review.issues && review.issues.length > 0) {
-    output += `## Saltman Code Review\n\n`;
     // Sort issues: security first (by severity), then bugs, then performance
     const sortedIssues = sortIssues(review.issues);
 
