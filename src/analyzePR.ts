@@ -1,39 +1,9 @@
 import OpenAI from "openai";
-import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import { formatErrorResponse, formatReviewResponse } from "./responses/format";
 import { SALTMAN_FOOTER } from "./responses/shared";
-import type { FileChange } from "./types";
+import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
+import { ReviewResponseSchema, getReviewSchema } from "./types";
 import { buildAnalysisPrompt } from "./prompts/buildAnalysisPrompt";
-
-interface AnalyzePRProps {
-  files: FileChange[];
-  apiKey: string;
-}
-
-const ReviewIssueSchema = z.object({
-  type: z
-    .enum(["bug", "security", "performance", "style", "best-practice"])
-    .describe("Type of issue"),
-  severity: z.enum(["low", "medium", "high", "critical"]).describe("Severity level of the issue"),
-  message: z.string().describe("Description of the issue"),
-  line: z.string().optional().describe("Line number if applicable"),
-  suggestion: z.string().optional().describe("Suggested improvement"),
-});
-
-const ReviewResponseSchema = z.object({
-  summary: z.string().describe("Overall assessment of the changes"),
-  issues: z.array(ReviewIssueSchema).describe("List of issues found in the code"),
-  positives: z.array(z.string()).describe("Things done well in this change"),
-});
-
-type ParsedReview = z.infer<typeof ReviewResponseSchema>;
-
-const getReviewSchema = () => {
-  return zodToJsonSchema(ReviewResponseSchema as any, {
-    name: "code_review_response",
-  }) as Record<string, unknown>;
-};
 
 const parseResponse = (content: string): ParsedReview => {
   try {
@@ -102,9 +72,7 @@ ${SALTMAN_FOOTER}`;
       throw new Error("No review content received from OpenAI");
     }
 
-    // Parse the JSON response
     const parsedReview = parseResponse(review);
-
     return formatReviewResponse({ review: parsedReview });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";

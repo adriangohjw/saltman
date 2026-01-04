@@ -1,16 +1,5 @@
 import { SALTMAN_FOOTER } from "./shared";
-
-interface ParsedReview {
-  summary: string;
-  issues: Array<{
-    type: string;
-    severity: string;
-    message: string;
-    line?: string;
-    suggestion?: string;
-  }>;
-  positives: string[];
-}
+import type { ParsedReview } from "../types";
 
 interface FormatReviewResponseProps {
   review: ParsedReview;
