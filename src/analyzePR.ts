@@ -42,7 +42,7 @@ ${SALTMAN_FOOTER}`;
 
     // Call OpenAI API with JSON schema for structured output
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5.1-codex-mini",
       messages: [
         {
           role: "system",
