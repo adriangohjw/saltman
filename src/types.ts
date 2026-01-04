@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 
 export interface FileChange {
   filename: string;
@@ -31,7 +30,5 @@ export const ReviewResponseSchema = z.object({
 export type ParsedReview = z.infer<typeof ReviewResponseSchema>;
 
 export const getReviewSchema = () => {
-  return zodToJsonSchema(ReviewResponseSchema as any, {
-    name: "code_review_response",
-  }) as Record<string, unknown>;
+  return z.toJSONSchema(ReviewResponseSchema) as Record<string, unknown>;
 };

@@ -19,8 +19,7 @@
     "@actions/core": "^2.0.1",
     "@actions/github": "^6.0.1",
     "openai": "^6.15.0",
-    "zod": "^4.3.5",
-    "zod-to-json-schema": "^3.23.5"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
