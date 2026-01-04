@@ -10,6 +10,7 @@ async function run(): Promise<void> {
   try {
     // Get inputs
     const token = core.getInput("github-token", { required: true });
+    const openaiApiKey = core.getInput("openai-api-key", { required: false });
 
     // Initialize GitHub client
     const octokit = github.getOctokit(token);
@@ -25,7 +26,7 @@ async function run(): Promise<void> {
 
     const files = await getPullRequestFiles({ octokit, owner, repo, prNumber });
 
-    const analysis = analyzePR({ files });
+    const analysis = await analyzePR({ files, apiKey: openaiApiKey });
 
     // Post comment to PR
     await octokit.rest.issues.createComment({
