@@ -18,11 +18,18 @@ const LocationSchema = z
     file: z
       .string()
       .describe("File path where the issue is located (from the diff, e.g., 'src/file.ts')"),
-    startLine: z.number().int().positive().optional().describe("Starting line number (1-indexed)"),
+    startLine: z
+      .number()
+      .int()
+      .positive()
+      .nullable()
+      .optional()
+      .describe("Starting line number (1-indexed)"),
     endLine: z
       .number()
       .int()
       .positive()
+      .nullable()
       .optional()
       .describe("Ending line number (1-indexed, only if issue spans multiple lines)"),
   })
