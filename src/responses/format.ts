@@ -249,6 +249,11 @@ export const formatReviewResponse = ({
           break;
       }
 
+      // Brief description (visible by default)
+      if (issue.description) {
+        output += `${formatParagraphs(issue.description)}\n\n`;
+      }
+
       // File and line reference with permalink (GitHub will auto-embed code snippet)
       if (issue.location?.file) {
         const { file, startLine, endLine } = issue.location;
@@ -261,11 +266,6 @@ export const formatReviewResponse = ({
           endLine ?? undefined,
         );
         output += `${permalink}\n\n`;
-      }
-
-      // Brief description (visible by default)
-      if (issue.description) {
-        output += `${formatParagraphs(issue.description)}\n\n`;
       }
 
       // Detailed explanation in dropdown
