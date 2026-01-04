@@ -30,9 +30,17 @@ async function run(): Promise<void> {
     await validateUserAccess({ octokit, owner, repo, username });
     await validatePullRequestAccess({ octokit, owner, repo, prNumber });
 
+    // Get PR details to get head SHA for permalinks
+    const prResponse = await octokit.rest.pulls.get({
+      owner,
+      repo,
+      pull_number: prNumber,
+    });
+    const headSha = prResponse.data.head.sha;
+
     const files = await getPullRequestFiles({ octokit, owner, repo, prNumber });
 
-    const analysis = await analyzePR({ files, apiKey: validatedApiKey });
+    const analysis = await analyzePR({ files, apiKey: validatedApiKey, owner, repo, headSha });
 
     // Post comment to PR
     await octokit.rest.issues.createComment({

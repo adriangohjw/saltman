@@ -1,5 +1,5 @@
 export const getSystemMessage = (): string => {
-  return "You are an expert code reviewer. Analyze the provided code diff and provide constructive feedback focusing on potential bugs, security issues, performance problems, and code quality improvements.";
+  return "You are an expert security-focused code reviewer. Analyze the provided code diff and provide constructive feedback with a primary focus on security vulnerabilities, potential bugs, and critical issues that could impact the application's security or reliability.";
 };
 
 export const buildAnalysisPrompt = (diff: string): string => {
@@ -12,11 +12,10 @@ ${diff}
 \`\`\`
 
 Focus on:
-1. Potential bugs or logical errors
-2. Security vulnerabilities
-3. Performance issues
-4. Code style and best practices
-5. Missing error handling
-6. Type safety issues
+1. Security vulnerabilities (SQL injection, XSS, authentication/authorization flaws, insecure data handling, etc.)
+2. Potential bugs or logical errors that could lead to security issues or system failures
+3. Missing error handling that could expose sensitive information or cause crashes
+4. Performance issues that could lead to denial of service or resource exhaustion
+5. Type safety issues that could cause runtime errors or security vulnerabilities
 `;
 };

@@ -14,17 +14,25 @@ export interface AnalyzePRProps {
 }
 
 export const ReviewIssueSchema = z.object({
-  type: z.enum(["bug", "security", "performance", "best-practice"]).describe("Type of issue"),
+  title: z.string().describe("Concise title for the issue (3-8 words)"),
+  type: z.enum(["bug", "security", "performance"]).describe("Type of issue"),
   severity: z.enum(["low", "medium", "high", "critical"]).describe("Severity level of the issue"),
-  message: z.string().describe("Description of the issue"),
-  line: z.string().nullable().optional().describe("Line number if applicable"),
-  suggestion: z.string().nullable().optional().describe("Suggested improvement"),
+  message: z.string().describe("Clear description of the issue"),
+  file: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("File path where the issue is located (from the diff, e.g., 'src/file.ts')"),
+  line: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Line number if applicable (can be a single number or range, e.g., '42' or '42-45')"),
+  suggestion: z.string().nullable().optional().describe("Helpful suggestion for fixing the issue"),
 });
 
 export const ReviewResponseSchema = z.object({
-  summary: z.string().describe("Overall assessment of the changes"),
   issues: z.array(ReviewIssueSchema).describe("List of issues found in the code"),
-  positives: z.array(z.string()).describe("Things done well in this change"),
 });
 
 export type ParsedReview = z.infer<typeof ReviewResponseSchema>;

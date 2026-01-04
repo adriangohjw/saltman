@@ -6,12 +6,24 @@ import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema } from "./types";
 import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
 
-export const analyzePR = async ({ files, apiKey }: AnalyzePRProps): Promise<string> => {
+interface AnalyzePRWithContextProps extends AnalyzePRProps {
+  owner: string;
+  repo: string;
+  headSha: string;
+}
+
+export const analyzePR = async ({
+  files,
+  apiKey,
+  owner,
+  repo,
+  headSha,
+}: AnalyzePRWithContextProps): Promise<string> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
 
   if (filesWithPatches.length === 0) {
-    return `## Code Review
+    return `## Saltman Code Review
 
 **Note:** No text-based file changes detected for code review.
 
@@ -47,7 +59,7 @@ ${SALTMAN_FOOTER}`;
     });
 
     const parsedReview = response.output_parsed as ParsedReview;
-    return formatReviewResponse({ review: parsedReview });
+    return formatReviewResponse({ review: parsedReview, owner, repo, headSha });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`OpenAI API error: ${errorMessage}`);
