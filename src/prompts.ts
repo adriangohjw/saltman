@@ -22,5 +22,10 @@ For each issue:
 - Provide a brief 2-line description (visible by default)
 - Provide a more detailed but succinct explanation in the explanation field (straight-to-the-point, will be shown in a dropdown)
 - Provide a helpful suggestion for fixing the issue if applicable
+- Optionally include a code snippet ONLY when it would genuinely help the engineer understand the solution better. Most issues should NOT include a code snippet. Only include one when:
+  * The solution is complex and seeing actual code would significantly clarify the approach
+  * The fix requires specific syntax or patterns that are best shown through example
+  * The code example would save the engineer time in understanding how to implement the fix
+  Do NOT include code snippets for simple fixes, obvious solutions, or when the suggestion text is already clear enough.
 `;
 };

@@ -89,6 +89,12 @@ export const formatReviewResponse = ({
       if (issue.suggestion) {
         output += `<details>\n<summary><strong>Solution</strong></summary>\n\n`;
         output += `${formatParagraphs(issue.suggestion)}\n\n`;
+
+        // Code snippet (only if provided and relevant)
+        if (issue.codeSnippet) {
+          output += `**Code example:**\n\n\`\`\`\n${issue.codeSnippet}\n\`\`\`\n\n`;
+        }
+
         output += `</details>\n\n`;
       }
     });

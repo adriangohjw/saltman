@@ -53,6 +53,13 @@ export const ReviewIssueSchema = z.object({
     ),
   location: LocationSchema,
   suggestion: z.string().nullable().optional().describe("Helpful suggestion for fixing the issue"),
+  codeSnippet: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Optional code snippet showing the proposed solution. Only include this when a code example would genuinely help the engineer understand the fix better. Most issues should NOT include this field. Only include when the solution is complex or when seeing actual code would significantly clarify the approach.",
+    ),
 });
 
 export const ReviewResponseSchema = z.object({
