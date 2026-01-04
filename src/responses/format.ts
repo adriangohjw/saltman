@@ -67,7 +67,6 @@ export const formatReviewResponse = ({
     review.issues.forEach((issue, index) => {
       output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
       output += `**Type:** ${getTypeLabel(issue.type)} | **Severity:** ${issue.severity}\n\n`;
-      output += `${issue.message}\n\n`;
 
       // File and line reference with permalink
       if (issue.file) {
@@ -81,9 +80,23 @@ export const formatReviewResponse = ({
         output += `**Line:** ${issue.line}\n\n`;
       }
 
-      // Suggestion with better formatting
+      // Brief description (visible by default)
+      if (issue.description) {
+        output += `${issue.description}\n\n`;
+      }
+
+      // Detailed explanation in dropdown
+      if (issue.explanation) {
+        output += `<details>\n<summary><strong>Explanation</strong></summary>\n\n`;
+        output += `${issue.explanation}\n\n`;
+        output += `</details>\n\n`;
+      }
+
+      // Solution in dropdown
       if (issue.suggestion) {
-        output += `**Suggestion:**\n\n${issue.suggestion}\n\n`;
+        output += `<details>\n<summary><strong>Solution</strong></summary>\n\n`;
+        output += `${issue.suggestion}\n\n`;
+        output += `</details>\n\n`;
       }
     });
   } else {

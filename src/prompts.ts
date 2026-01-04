@@ -17,5 +17,10 @@ Focus on:
 3. Missing error handling that could expose sensitive information or cause crashes
 4. Performance issues that could lead to denial of service or resource exhaustion
 5. Type safety issues that could cause runtime errors or security vulnerabilities
+
+For each issue:
+- Provide a brief 2-line description (visible by default)
+- Provide a more detailed but succinct explanation in the explanation field (straight-to-the-point, will be shown in a dropdown)
+- Provide a helpful suggestion for fixing the issue if applicable
 `;
 };

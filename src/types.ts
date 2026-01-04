@@ -17,7 +17,16 @@ export const ReviewIssueSchema = z.object({
   title: z.string().describe("Concise title for the issue (3-8 words)"),
   type: z.enum(["bug", "security", "performance"]).describe("Type of issue"),
   severity: z.enum(["low", "medium", "high", "critical"]).describe("Severity level of the issue"),
-  message: z.string().describe("Clear description of the issue"),
+  description: z
+    .string()
+    .describe(
+      "Brief 2-line summary of the issue (visible by default, keep it concise and to the point)",
+    ),
+  explanation: z
+    .string()
+    .describe(
+      "More detailed but succinct explanation of the issue, why it matters, and its impact (straight-to-the-point, will be shown in a dropdown)",
+    ),
   file: z
     .string()
     .nullable()
