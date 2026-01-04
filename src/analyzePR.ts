@@ -41,7 +41,6 @@ ${SALTMAN_FOOTER}`;
           content: buildAnalysisPrompt(diff),
         },
       ],
-      temperature: 0.1,
       text: {
         format: zodTextFormat(ReviewResponseSchema, "code_review_response"),
       },
