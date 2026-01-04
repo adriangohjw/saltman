@@ -209,29 +209,6 @@ export const formatReviewResponse = ({
       info: securityIssues.filter((i) => i.severity === "info").length,
     };
 
-    // Add security summary if there are security issues
-    if (securityIssues.length > 0) {
-      output += `### 🔒 Security Summary\n\n`;
-      const severityCounts: string[] = [];
-
-      // Use exhaustive switch for severity counts
-      for (const severity of SEVERITY_VALUES) {
-        const count = securityBySeverity[severity];
-        if (count > 0) {
-          const emoji = getSeverityEmoji(severity);
-          const label = severity.charAt(0).toUpperCase() + severity.slice(1);
-          severityCounts.push(`${emoji} **${label}:** ${count}`);
-        }
-      }
-
-      output += `${severityCounts.join(" | ")}\n\n`;
-      output += `**Total Security Issues:** ${securityIssues.length}\n\n`;
-      if (securityBySeverity.critical > 0 || securityBySeverity.high > 0) {
-        output += `⚠️ **Action Required:** Please address critical and high severity issues immediately.\n\n`;
-      }
-      output += `---\n\n`;
-    }
-
     sortedIssues.forEach((issue, index) => {
       output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
