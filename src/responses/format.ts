@@ -31,50 +31,39 @@ const getSeverityEmoji = (severity: Severity): string => {
   }
 };
 
-const getTypeLabel = (type: IssueType): string => {
-  switch (type) {
-    case "vulnerability":
-      return "🔴 Vulnerability";
-    case "misconfiguration":
-      return "🟠 Misconfiguration";
-    case "best_practice":
-      return "💡 Best Practice";
-  }
-};
-
 const getSecurityCategoryLabel = (category: SecurityCategory | null | undefined): string => {
   if (!category) return "";
   switch (category) {
     case "injection":
-      return "💉 Injection";
+      return "Injection";
     case "authentication":
-      return "🔐 Authentication";
+      return "Authentication";
     case "authorization":
-      return "🛡️ Authorization";
+      return "Authorization";
     case "cryptography":
-      return "🔑 Cryptography";
+      return "Cryptography";
     case "xss":
-      return "⚠️ XSS";
+      return "XSS";
     case "xxe":
-      return "📄 XXE";
+      return "XXE";
     case "deserialization":
-      return "🔄 Deserialization";
+      return "Deserialization";
     case "ssrf":
-      return "🌐 SSRF";
+      return "SSRF";
     case "csrf":
-      return "🔄 CSRF";
+      return "CSRF";
     case "idor":
-      return "🔓 IDOR";
+      return "IDOR";
     case "secrets":
-      return "🔑 Secrets";
+      return "Secrets";
     case "config":
-      return "⚙️ Configuration";
+      return "Configuration";
     case "logging":
-      return "📝 Logging";
+      return "Logging";
     case "api":
-      return "🔌 API Security";
+      return "API Security";
     case "other":
-      return "🔒 Security";
+      return "Security";
   }
 };
 
@@ -82,11 +71,11 @@ const getExploitabilityLabel = (exploitability: Exploitability | null | undefine
   if (!exploitability) return "";
   switch (exploitability) {
     case "easy":
-      return "🟢 Easy";
+      return "Easy";
     case "medium":
-      return "🟡 Medium";
+      return "Medium";
     case "hard":
-      return "🟠 Hard";
+      return "Hard";
   }
 };
 
@@ -94,19 +83,19 @@ const getImpactLabel = (impact: Impact | null | undefined): string => {
   if (!impact) return "";
   switch (impact) {
     case "system_compromise":
-      return "🔴 System Compromise";
+      return "System Compromise";
     case "data_breach":
-      return "🟠 Data Breach";
+      return "Data Breach";
     case "privilege_escalation":
-      return "🟡 Privilege Escalation";
+      return "Privilege Escalation";
     case "information_disclosure":
-      return "🟡 Information Disclosure";
+      return "Information Disclosure";
     case "denial_of_service":
-      return "🟠 Denial of Service";
+      return "Denial of Service";
     case "data_modification":
-      return "🟡 Data Modification";
+      return "Data Modification";
     case "minimal":
-      return "🟢 Minimal";
+      return "Minimal";
   }
 };
 
@@ -191,20 +180,16 @@ export const formatReviewResponse = ({
     sortedIssues.forEach((issue, index) => {
       output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
-      // Build type and severity line
-      const typeSeverityLine: string[] = [
-        `**Type:** ${getTypeLabel(issue.type)}`,
-        `**Severity:** ${issue.severity}`,
-      ];
+      // Build metadata line combining severity, category, exploitability, and impact
+      const formattedSeverity = issue.severity.charAt(0).toUpperCase() + issue.severity.slice(1);
+      const metadataLine: string[] = [`**Severity:** ${formattedSeverity}`];
 
       // Add security category and metadata based on issue type
       switch (issue.type) {
         case "vulnerability":
         case "misconfiguration":
           if (issue.securityCategory) {
-            typeSeverityLine.push(
-              `**Category:** ${getSecurityCategoryLabel(issue.securityCategory)}`,
-            );
+            metadataLine.push(`**Category:** ${getSecurityCategoryLabel(issue.securityCategory)}`);
           }
           break;
         case "best_practice":
@@ -212,30 +197,17 @@ export const formatReviewResponse = ({
           break;
       }
 
-      output += `${typeSeverityLine.join(" | ")}\n\n`;
-
-      // Add security metadata for vulnerability issues
-      switch (issue.type) {
-        case "vulnerability": {
-          const securityMetadata: string[] = [];
-          if (issue.exploitability) {
-            securityMetadata.push(
-              `**Exploitability:** ${getExploitabilityLabel(issue.exploitability)}`,
-            );
-          }
-          if (issue.impact) {
-            securityMetadata.push(`**Impact:** ${getImpactLabel(issue.impact)}`);
-          }
-          if (securityMetadata.length > 0) {
-            output += `${securityMetadata.join(" | ")}\n\n`;
-          }
-          break;
+      // Add exploitability and impact for vulnerability issues
+      if (issue.type === "vulnerability") {
+        if (issue.exploitability) {
+          metadataLine.push(`**Exploitability:** ${getExploitabilityLabel(issue.exploitability)}`);
         }
-        case "misconfiguration":
-        case "best_practice":
-          // No exploitability/impact metadata for these types
-          break;
+        if (issue.impact) {
+          metadataLine.push(`**Impact:** ${getImpactLabel(issue.impact)}`);
+        }
       }
+
+      output += `${metadataLine.join(" | ")}\n\n`;
 
       // Brief description (visible by default)
       if (issue.description) {
