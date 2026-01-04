@@ -36,6 +36,17 @@ const getTypeLabel = (type: string): string => {
   }
 };
 
+// Format text with proper paragraph breaks for markdown
+const formatParagraphs = (text: string): string => {
+  // Split by double newlines (paragraph breaks) or single newline if followed by content
+  // This preserves intentional paragraph breaks while handling various formats
+  return text
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length > 0)
+    .join("\n\n");
+};
+
 export const formatReviewResponse = ({
   review,
   owner,
@@ -52,7 +63,7 @@ export const formatReviewResponse = ({
 
       // Brief description (visible by default)
       if (issue.description) {
-        output += `${issue.description}\n\n`;
+        output += `${formatParagraphs(issue.description)}\n\n`;
       }
 
       // File and line reference with permalink (GitHub will auto-embed code snippet)
@@ -70,14 +81,14 @@ export const formatReviewResponse = ({
       // Detailed explanation in dropdown
       if (issue.explanation) {
         output += `<details>\n<summary><strong>Explanation</strong></summary>\n\n`;
-        output += `${issue.explanation}\n\n`;
+        output += `${formatParagraphs(issue.explanation)}\n\n`;
         output += `</details>\n\n`;
       }
 
       // Solution in dropdown
       if (issue.suggestion) {
         output += `<details>\n<summary><strong>Solution</strong></summary>\n\n`;
-        output += `${issue.suggestion}\n\n`;
+        output += `${formatParagraphs(issue.suggestion)}\n\n`;
         output += `</details>\n\n`;
       }
     });
