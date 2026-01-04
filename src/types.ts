@@ -15,9 +15,7 @@ export interface AnalyzePRProps {
 }
 
 export const ReviewIssueSchema = z.object({
-  type: z
-    .enum(["bug", "security", "performance", "style", "best-practice"])
-    .describe("Type of issue"),
+  type: z.enum(["bug", "security", "performance", "best-practice"]).describe("Type of issue"),
   severity: z.enum(["low", "medium", "high", "critical"]).describe("Severity level of the issue"),
   message: z.string().describe("Description of the issue"),
   line: z.string().optional().describe("Line number if applicable"),

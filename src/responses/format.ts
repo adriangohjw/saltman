@@ -28,8 +28,6 @@ const getTypeLabel = (type: string): string => {
       return "🔒 Security";
     case "performance":
       return "⚡ Performance";
-    case "style":
-      return "💅 Style";
     case "best-practice":
       return "✨ Best Practice";
     default:
