@@ -175,14 +175,6 @@ const buildFilePermalink = (
   return baseUrl;
 };
 
-// Format line numbers for display (e.g., "42" or "42-45")
-const formatLineForDisplay = (startLine: number, endLine?: number): string => {
-  if (endLine && endLine > startLine) {
-    return `${startLine}-${endLine}`;
-  }
-  return `${startLine}`;
-};
-
 export const formatReviewResponse = ({
   review,
   owner,
@@ -269,12 +261,7 @@ export const formatReviewResponse = ({
           startLine ?? undefined,
           endLine ?? undefined,
         );
-        if (startLine) {
-          const displayLine = formatLineForDisplay(startLine, endLine ?? undefined);
-          output += `**Location:** \`${file}:${displayLine}\`\n\n${permalink}\n\n`;
-        } else {
-          output += `**Location:** \`${file}\`\n\n${permalink}\n\n`;
-        }
+        output += `${permalink}\n\n`;
       }
 
       // Brief description (visible by default)
