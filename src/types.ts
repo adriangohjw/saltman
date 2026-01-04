@@ -17,8 +17,8 @@ export const ReviewIssueSchema = z.object({
   type: z.enum(["bug", "security", "performance", "best-practice"]).describe("Type of issue"),
   severity: z.enum(["low", "medium", "high", "critical"]).describe("Severity level of the issue"),
   message: z.string().describe("Description of the issue"),
-  line: z.string().optional().describe("Line number if applicable"),
-  suggestion: z.string().optional().describe("Suggested improvement"),
+  line: z.string().nullable().optional().describe("Line number if applicable"),
+  suggestion: z.string().nullable().optional().describe("Suggested improvement"),
 });
 
 export const ReviewResponseSchema = z.object({
