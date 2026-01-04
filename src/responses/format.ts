@@ -99,23 +99,3 @@ export const formatReviewResponse = ({
   output += getSaltmanFooter(owner, repo, headSha);
   return output;
 };
-
-interface FormatErrorResponseProps {
-  errorMessage: string;
-  owner: string;
-  repo: string;
-  headSha: string;
-}
-
-export const formatErrorResponse = ({
-  errorMessage,
-  owner,
-  repo,
-  headSha,
-}: FormatErrorResponseProps): string => {
-  return `## ⚠️ Saltman Code Review Error
-
-Failed to generate LLM code review: ${errorMessage}
-
-${getSaltmanFooter(owner, repo, headSha)}`;
-};

@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
-import { formatReviewResponse, formatErrorResponse } from "./responses/format";
+import { formatReviewResponse } from "./responses/format";
 import { getSaltmanFooter } from "./responses/shared";
 import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema } from "./types";
@@ -60,13 +60,9 @@ ${getSaltmanFooter(owner, repo, headSha)}`;
 
     // Check if output_parsed is null (can happen when model refuses or parsing fails)
     if (response.output_parsed === null) {
-      return formatErrorResponse({
-        errorMessage:
-          "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
-        owner,
-        repo,
-        headSha,
-      });
+      throw new Error(
+        "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
+      );
     }
 
     const parsedReview = response.output_parsed as ParsedReview;
