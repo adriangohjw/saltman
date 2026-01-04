@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { formatReviewResponse, formatErrorResponse } from "./responses/format";
-import { SALTMAN_FOOTER } from "./responses/shared";
+import { getSaltmanFooter } from "./responses/shared";
 import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema } from "./types";
 import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
@@ -27,7 +27,7 @@ export const analyzePR = async ({
 
 **Note:** No text-based file changes detected for code review.
 
-${SALTMAN_FOOTER}`;
+${getSaltmanFooter(owner, repo, headSha)}`;
   }
 
   try {
@@ -63,6 +63,9 @@ ${SALTMAN_FOOTER}`;
       return formatErrorResponse({
         errorMessage:
           "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
+        owner,
+        repo,
+        headSha,
       });
     }
 

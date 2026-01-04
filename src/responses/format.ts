@@ -1,4 +1,4 @@
-import { SALTMAN_FOOTER } from "./shared";
+import { getSaltmanFooter } from "./shared";
 import type { ParsedReview } from "../types";
 
 interface FormatReviewResponseProps {
@@ -90,18 +90,26 @@ export const formatReviewResponse = ({
     output += `No issues detected! 🎉\n\n`;
   }
 
-  output += SALTMAN_FOOTER;
+  output += getSaltmanFooter(owner, repo, headSha);
   return output;
 };
 
 interface FormatErrorResponseProps {
   errorMessage: string;
+  owner: string;
+  repo: string;
+  headSha: string;
 }
 
-export const formatErrorResponse = ({ errorMessage }: FormatErrorResponseProps): string => {
+export const formatErrorResponse = ({
+  errorMessage,
+  owner,
+  repo,
+  headSha,
+}: FormatErrorResponseProps): string => {
   return `## ⚠️ Saltman Code Review Error
 
 Failed to generate LLM code review: ${errorMessage}
 
-${SALTMAN_FOOTER}`;
+${getSaltmanFooter(owner, repo, headSha)}`;
 };
