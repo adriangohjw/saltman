@@ -47,6 +47,33 @@ const formatParagraphs = (text: string): string => {
     .join("\n\n");
 };
 
+const buildFilePermalink = (
+  owner: string,
+  repo: string,
+  headSha: string,
+  file: string,
+  startLine?: number,
+  endLine?: number,
+): string => {
+  const baseUrl = `https://github.com/${owner}/${repo}/blob/${headSha}/${file}`;
+  if (startLine) {
+    if (endLine && endLine > startLine) {
+      return `${baseUrl}#L${startLine}-L${endLine}`;
+    } else {
+      return `${baseUrl}#L${startLine}`;
+    }
+  }
+  return baseUrl;
+};
+
+// Format line numbers for display (e.g., "42" or "42-45")
+const formatLineForDisplay = (startLine: number, endLine?: number): string => {
+  if (endLine && endLine > startLine) {
+    return `${startLine}-${endLine}`;
+  }
+  return `${startLine}`;
+};
+
 export const formatReviewResponse = ({
   review,
   owner,
@@ -61,21 +88,28 @@ export const formatReviewResponse = ({
       output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
       output += `**Type:** ${getTypeLabel(issue.type)} | **Severity:** ${issue.severity}\n\n`;
 
-      // Brief description (visible by default)
-      if (issue.description) {
-        output += `${formatParagraphs(issue.description)}\n\n`;
-      }
-
       // File and line reference with permalink (GitHub will auto-embed code snippet)
       if (issue.location?.file) {
         const { file, startLine, endLine } = issue.location;
+        const permalink = buildFilePermalink(
+          owner,
+          repo,
+          headSha,
+          file,
+          startLine ?? undefined,
+          endLine ?? undefined,
+        );
         if (startLine) {
-          const lineRange =
-            endLine && endLine > startLine ? `L${startLine}-L${endLine}` : `L${startLine}`;
-          output += `<!-- LOCATIONS START\n${file}#${lineRange}\nLOCATIONS END -->\n\n`;
+          const displayLine = formatLineForDisplay(startLine, endLine ?? undefined);
+          output += `**Location:** \`${file}:${displayLine}\`\n\n${permalink}\n\n`;
         } else {
-          output += `<!-- LOCATIONS START\n${file}\nLOCATIONS END -->\n\n`;
+          output += `**Location:** \`${file}\`\n\n${permalink}\n\n`;
         }
+      }
+
+      // Brief description (visible by default)
+      if (issue.description) {
+        output += `${formatParagraphs(issue.description)}\n\n`;
       }
 
       // Detailed explanation in dropdown
