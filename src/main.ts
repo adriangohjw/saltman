@@ -5,15 +5,21 @@ import { validateUserAccess } from "./validateUserAccess";
 import { validatePullRequestAccess } from "./validatePullRequestAccess";
 import { analyzePR } from "./analyzePR";
 import { getPullRequestFiles } from "./getPullRequestFiles";
+import { validateGithubInputs } from "./validations/githubInputs";
 
 async function run(): Promise<void> {
   try {
     // Get inputs
     const token = core.getInput("github-token", { required: true });
-    const openaiApiKey = core.getInput("openai-api-key", { required: false });
+    const openaiApiKey = core.getInput("openai-api-key", { required: true });
+
+    const { token: validatedToken, apiKey: validatedApiKey } = validateGithubInputs({
+      token,
+      apiKey: openaiApiKey,
+    });
 
     // Initialize GitHub client
-    const octokit = github.getOctokit(token);
+    const octokit = github.getOctokit(validatedToken);
     const context = github.context;
 
     const { prNumber, username } = getContextValues({ context });
@@ -26,7 +32,7 @@ async function run(): Promise<void> {
 
     const files = await getPullRequestFiles({ octokit, owner, repo, prNumber });
 
-    const analysis = await analyzePR({ files, apiKey: openaiApiKey });
+    const analysis = await analyzePR({ files, apiKey: validatedApiKey });
 
     // Post comment to PR
     await octokit.rest.issues.createComment({

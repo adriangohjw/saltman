@@ -1,7 +1,6 @@
 import OpenAI from "openai";
 import { formatErrorResponse, formatReviewResponse } from "./responses/format";
 import { SALTMAN_FOOTER } from "./responses/shared";
-import { MOCK_REPONSE } from "./responses/mockResponse";
 import type { FileChange } from "./types";
 import { buildAnalysisPrompt } from "./prompts/buildAnalysisPrompt";
 
@@ -9,12 +8,6 @@ interface AnalyzePRProps {
   files: FileChange[];
   apiKey: string;
 }
-
-const validateApiKey = (apiKey: AnalyzePRProps["apiKey"]): void => {
-  if (!apiKey || apiKey.trim() === "") {
-    console.warn("⚠️  No valid OpenAI API key provided or using test key. Using mock responses.");
-  }
-};
 
 export const analyzePR = async ({ files, apiKey }: AnalyzePRProps): Promise<string> => {
   // Filter out files without patches (binary files, etc.)
@@ -26,12 +19,6 @@ export const analyzePR = async ({ files, apiKey }: AnalyzePRProps): Promise<stri
 **Note:** No text-based file changes detected for code review.
 
 ${SALTMAN_FOOTER}`;
-  }
-
-  // Validate API key and return mock response if not provided or invalid
-  if (!apiKey) {
-    validateApiKey(apiKey);
-    return MOCK_REPONSE;
   }
 
   try {

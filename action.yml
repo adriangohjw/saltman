@@ -8,8 +8,8 @@ inputs:
     description: 'GitHub token for API access'
     required: true
   openai-api-key:
-    description: 'OpenAI API key for LLM code review. If not provided, a mock response will be returned.'
-    required: false
+    description: 'OpenAI API key for LLM code review'
+    required: true
 runs:
   using: 'composite'
   steps:
