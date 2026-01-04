@@ -6,8 +6,6 @@ runs:
   steps:
     - name: Setup Bun
       uses: oven-sh/setup-bun@v2
-      with:
-        bun-version: latest
 
     - shell: bash
       run: bun install --frozen-lockfile
