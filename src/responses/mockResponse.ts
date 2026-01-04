@@ -1,3 +1,5 @@
+import { SALTMAN_FOOTER } from "./shared";
+
 export const MOCK_REPONSE = `## Code Review
 
 **Note:** This is a mock code review analysis - no actual AI analysis performed.
@@ -13,4 +15,4 @@ Mock code review analysis for testing purposes.
 - Code is properly formatted
 - Changes follow expected patterns
 
-<sub>Saltman</sub>`;
+${SALTMAN_FOOTER}`;

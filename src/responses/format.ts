@@ -1,3 +1,5 @@
+import { SALTMAN_FOOTER } from "./shared";
+
 interface FormatReviewResponseProps {
   review: string;
 }
@@ -7,7 +9,7 @@ export const formatReviewResponse = ({ review }: FormatReviewResponseProps): str
 
 ${review}
 
-<sub>Saltman</sub>`;
+${SALTMAN_FOOTER}`;
 };
 
 interface FormatErrorResponseProps {
@@ -19,5 +21,5 @@ export const formatErrorResponse = ({ errorMessage }: FormatErrorResponseProps):
 
 Failed to generate LLM code review: ${errorMessage}
 
-<sub>Saltman</sub>`;
+${SALTMAN_FOOTER}`;
 };

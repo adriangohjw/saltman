@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { formatErrorResponse, formatReviewResponse } from "./responses/format";
+import { SALTMAN_FOOTER } from "./responses/shared";
 import { MOCK_REPONSE } from "./responses/mockResponse";
 import type { FileChange } from "./types";
 import { buildAnalysisPrompt } from "./prompts/buildAnalysisPrompt";
@@ -24,7 +25,7 @@ export const analyzePR = async ({ files, apiKey }: AnalyzePRProps): Promise<stri
 
 **Note:** No text-based file changes detected for code review.
 
-<sub>Saltman</sub>`;
+${SALTMAN_FOOTER}`;
   }
 
   // Validate API key and return mock response if not provided or invalid
