@@ -188,18 +188,6 @@ export const formatReviewResponse = ({
     // Sort issues: security first (by severity), then bugs, then performance
     const sortedIssues = sortIssues(review.issues);
 
-    // Calculate security summary
-    const securityIssues = sortedIssues.filter(
-      (issue) => issue.type === "vulnerability" || issue.type === "misconfiguration",
-    );
-    const securityBySeverity = {
-      critical: securityIssues.filter((i) => i.severity === "critical").length,
-      high: securityIssues.filter((i) => i.severity === "high").length,
-      medium: securityIssues.filter((i) => i.severity === "medium").length,
-      low: securityIssues.filter((i) => i.severity === "low").length,
-      info: securityIssues.filter((i) => i.severity === "info").length,
-    };
-
     sortedIssues.forEach((issue, index) => {
       output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
