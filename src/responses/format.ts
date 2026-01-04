@@ -80,9 +80,16 @@ export const formatReviewResponse = ({
       // File and line reference with permalink (GitHub will auto-embed code snippet)
       if (issue.location?.file) {
         const { file, startLine, endLine } = issue.location;
-        const permalink = buildFilePermalink(owner, repo, headSha, file, startLine, endLine);
+        const permalink = buildFilePermalink(
+          owner,
+          repo,
+          headSha,
+          file,
+          startLine ?? undefined,
+          endLine ?? undefined,
+        );
         if (startLine) {
-          const displayLine = formatLineForDisplay(startLine, endLine);
+          const displayLine = formatLineForDisplay(startLine, endLine ?? undefined);
           output += `**Location:** \`${file}:${displayLine}\`\n\n${permalink}\n\n`;
         } else {
           output += `**Location:** \`${file}\`\n\n${permalink}\n\n`;
