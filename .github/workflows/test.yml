@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Saltman Action
-        uses: adriangohjw/saltman@refs/heads/${{ github.event.pull_request.head.ref }}
+        uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
