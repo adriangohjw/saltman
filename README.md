@@ -36,7 +36,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          post-comment: true  # Optional: set to true to post analysis as PR comment (defaults to false)
+          post-comment-when-no-issues: true  # Optional: set to true to post analysis as PR comment when no issues are detected (defaults to false)
 ```
 
 **Note:** Replace `adriangohjw/saltman@main` with your own repository path. Using `@main` will always use the latest commit on the main branch.
@@ -45,7 +45,7 @@ jobs:
 
 - `github-token` (required): GitHub token for API access. Use `${{ secrets.GITHUB_TOKEN }}` for automatic token.
 - `openai-api-key` (required): OpenAI API key for LLM-powered code review. Store this as a secret in your repository settings (e.g., `OPENAI_API_KEY`).
-- `post-comment` (optional): Whether to post the analysis as a comment on the PR. Must be `true` or `false` if specified. Defaults to `false` if not provided (no comment will be posted).
+- `post-comment-when-no-issues` (optional): Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false` if not provided (no comment will be posted).
 
 ### Outputs
 

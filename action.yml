@@ -10,8 +10,8 @@ inputs:
   openai-api-key:
     description: 'OpenAI API key for LLM code review'
     required: true
-  post-comment:
-    description: 'Whether to post the analysis as a comment on the PR (true/false). Defaults to false if not specified.'
+  post-comment-when-no-issues:
+    description: 'Whether to post the analysis as a comment on the PR when no issues are detected (true/false). Defaults to false if not specified.'
     required: false
 runs:
   using: 'composite'
@@ -30,5 +30,5 @@ runs:
       env:
         INPUT_GITHUB-TOKEN: ${{ inputs.github-token }}
         INPUT_OPENAI-API-KEY: ${{ inputs.openai-api-key }}
-        INPUT_POST-COMMENT: ${{ inputs.post-comment }}
+        INPUT_POST-COMMENT-WHEN-NO-ISSUES: ${{ inputs.post-comment-when-no-issues }}
 

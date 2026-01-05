@@ -12,12 +12,12 @@ async function run(): Promise<void> {
     // Get inputs
     const inputToken = core.getInput("github-token", { required: true });
     const inputOpenaiApiKey = core.getInput("openai-api-key", { required: true });
-    const inputPostComment = core.getInput("post-comment");
+    const inputPostCommentWhenNoIssues = core.getInput("post-comment-when-no-issues");
 
-    const { token, apiKey, postComment } = validateGithubInputs({
+    const { token, apiKey, postCommentWhenNoIssues } = validateGithubInputs({
       token: inputToken,
       apiKey: inputOpenaiApiKey,
-      postComment: inputPostComment,
+      postCommentWhenNoIssues: inputPostCommentWhenNoIssues,
     });
 
     // Initialize GitHub client
@@ -44,7 +44,9 @@ async function run(): Promise<void> {
 
     const analysis = await analyzePR({ files, apiKey, owner, repo, headSha });
 
-    if (postComment) {
+    // Only post comment when there are no issues and postCommentWhenNoIssues is enabled
+    const hasNoIssues = analysis.includes("No issues detected!");
+    if (postCommentWhenNoIssues && hasNoIssues) {
       await octokit.rest.issues.createComment({
         owner,
         repo,
