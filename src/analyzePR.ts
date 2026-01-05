@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
+import * as core from "@actions/core";
 import { separateIssuesBySeverity } from "./responses/format";
 import { generateInlineComments, type InlineComment } from "./responses/inline";
 import { formatAggregatedComment } from "./responses/aggregated";
@@ -70,6 +71,10 @@ export const analyzePR = async ({
     }
 
     const parsedReview = response.output_parsed as ParsedReview;
+
+    // Log AI response in nicely formatted JSON for debugging
+    core.info("=== AI Response (Parsed) ===");
+    core.info(JSON.stringify(parsedReview, null, 2));
 
     // Return null if there are no issues
     if (!parsedReview.issues || parsedReview.issues.length === 0) {
