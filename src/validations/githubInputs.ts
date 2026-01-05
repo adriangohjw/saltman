@@ -7,10 +7,13 @@ const GithubInputsSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) => val === undefined || val === "true" || val === "false",
+      (val) => val === undefined || val === "" || val === "true" || val === "false",
       "post-comment must be 'true' or 'false' if specified",
     )
-    .transform((val) => (val === undefined ? undefined : val === "true")),
+    .transform((val) => {
+      if (val === undefined || val === "") return undefined;
+      return val === "true";
+    }),
 });
 
 export type GithubInputs = z.infer<typeof GithubInputsSchema>;
