@@ -1,12 +1,5 @@
 import { getSaltmanFooter } from "./shared";
-import type {
-  ParsedReview,
-  Severity,
-  IssueType,
-  Exploitability,
-  Impact,
-  SecurityCategory,
-} from "../types";
+import type { ParsedReview, Severity, Exploitability, Impact, SecurityCategory } from "../types";
 
 interface FormatReviewResponseProps {
   review: ParsedReview;
@@ -113,22 +106,9 @@ const getSeverityOrder = (severity: Severity): number => {
   }
 };
 
-const getTypeOrder = (type: IssueType): number => {
-  switch (type) {
-    case "vulnerability":
-      return 0;
-    case "misconfiguration":
-      return 1;
-    case "best_practice":
-      return 2;
-  }
-};
-
-// Sort issues: vulnerability first (by severity), then misconfiguration, then best_practice
+// Sort issues by severity only
 const sortIssues = (issues: ParsedReview["issues"]) => {
   return [...issues].sort((a, b) => {
-    const typeDiff = getTypeOrder(a.type) - getTypeOrder(b.type);
-    if (typeDiff !== 0) return typeDiff;
     return getSeverityOrder(a.severity) - getSeverityOrder(b.severity);
   });
 };
@@ -176,7 +156,7 @@ export const formatReviewResponse = ({
 
   let output = `## Saltman Code Review\n\n`;
 
-  // Sort issues: security first (by severity), then bugs, then performance
+  // Sort issues by severity
   const sortedIssues = sortIssues(review.issues);
 
   sortedIssues.forEach((issue, index) => {
@@ -186,27 +166,17 @@ export const formatReviewResponse = ({
     const formattedSeverity = issue.severity.charAt(0).toUpperCase() + issue.severity.slice(1);
     const metadataLine: string[] = [`**Severity:** ${formattedSeverity}`];
 
-    // Add security category and metadata based on issue type
-    switch (issue.type) {
-      case "vulnerability":
-      case "misconfiguration":
-        if (issue.securityCategory) {
-          metadataLine.push(`**Category:** ${getSecurityCategoryLabel(issue.securityCategory)}`);
-        }
-        break;
-      case "best_practice":
-        // No category for best practices
-        break;
+    // Add security category if present
+    if (issue.securityCategory) {
+      metadataLine.push(`**Category:** ${getSecurityCategoryLabel(issue.securityCategory)}`);
     }
 
-    // Add exploitability and impact for vulnerability issues
-    if (issue.type === "vulnerability") {
-      if (issue.exploitability) {
-        metadataLine.push(`**Exploitability:** ${getExploitabilityLabel(issue.exploitability)}`);
-      }
-      if (issue.impact) {
-        metadataLine.push(`**Impact:** ${getImpactLabel(issue.impact)}`);
-      }
+    // Add exploitability and impact if present (only for vulnerabilities)
+    if (issue.exploitability) {
+      metadataLine.push(`**Exploitability:** ${getExploitabilityLabel(issue.exploitability)}`);
+    }
+    if (issue.impact) {
+      metadataLine.push(`**Impact:** ${getImpactLabel(issue.impact)}`);
     }
 
     output += `${metadataLine.join(" | ")}\n\n`;

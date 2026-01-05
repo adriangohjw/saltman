@@ -15,7 +15,6 @@ export const IMPACT_VALUES = [
   "data_modification",
   "minimal",
 ] as const;
-export const ISSUE_TYPE_VALUES = ["vulnerability", "misconfiguration", "best_practice"] as const;
 export const SECURITY_CATEGORY_VALUES = [
   "injection",
   "authentication",
@@ -38,7 +37,6 @@ export const SECURITY_CATEGORY_VALUES = [
 export type Severity = (typeof SEVERITY_VALUES)[number];
 export type Exploitability = (typeof EXPLOITABILITY_VALUES)[number];
 export type Impact = (typeof IMPACT_VALUES)[number];
-export type IssueType = (typeof ISSUE_TYPE_VALUES)[number];
 export type SecurityCategory = (typeof SECURITY_CATEGORY_VALUES)[number];
 
 // ============================================================================
@@ -84,11 +82,6 @@ const LocationSchema = z
 
 export const ReviewIssueSchema = z.object({
   title: z.string().describe("Concise title for the issue (3-8 words)"),
-  type: z
-    .enum(ISSUE_TYPE_VALUES)
-    .describe(
-      "Type of security issue: vulnerability (exploitable security flaw), misconfiguration (security misconfiguration), best_practice (security best practice recommendation)",
-    ),
   severity: z
     .enum(SEVERITY_VALUES)
     .describe(
