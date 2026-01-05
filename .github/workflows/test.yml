@@ -23,7 +23,6 @@ jobs:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           post-comment-when-no-issues: true
           ignore-patterns: |
-            examples/vulnerable.ts
             **/*.md
             package.json
             bun.lockb
