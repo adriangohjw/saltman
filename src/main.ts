@@ -44,8 +44,7 @@ async function run(): Promise<void> {
 
     const analysis = await analyzePR({ files, apiKey, owner, repo, headSha });
 
-    // Post comment to PR only if post-comment is explicitly set to true
-    if (postComment === true) {
+    if (postComment) {
       await octokit.rest.issues.createComment({
         owner,
         repo,
