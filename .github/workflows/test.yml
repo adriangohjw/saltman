@@ -24,3 +24,6 @@ jobs:
           post-comment-when-no-issues: true
           ignore-patterns: |
             examples/vulnerable.ts
+            **/*.md
+            package.json
+            bun.lockb
