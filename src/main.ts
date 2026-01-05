@@ -44,9 +44,9 @@ async function run(): Promise<void> {
 
     const analysis = await analyzePR({ files, apiKey, owner, repo, headSha });
 
-    // Only post comment when there are no issues and postCommentWhenNoIssues is enabled
+    // Always post comment when issues are detected, or when no issues are detected and postCommentWhenNoIssues is enabled
     const hasNoIssues = analysis.includes("No issues detected!");
-    if (postCommentWhenNoIssues && hasNoIssues) {
+    if (!hasNoIssues || postCommentWhenNoIssues) {
       await octokit.rest.issues.createComment({
         owner,
         repo,
