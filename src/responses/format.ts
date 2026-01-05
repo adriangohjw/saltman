@@ -1,5 +1,5 @@
-import { getSaltmanFooter } from "./shared";
 import type { ParsedReview, Severity, Exploitability, Impact, SecurityCategory } from "../types";
+import { formatAggregatedComment } from "./aggregated";
 
 interface FormatReviewResponseProps {
   review: ParsedReview;
@@ -8,7 +8,8 @@ interface FormatReviewResponseProps {
   headSha: string;
 }
 
-const getSeverityEmoji = (severity: Severity): string => {
+// Shared utility functions for formatting
+export const getSeverityEmoji = (severity: Severity): string => {
   switch (severity) {
     case "critical":
       return "🔴";
@@ -23,7 +24,7 @@ const getSeverityEmoji = (severity: Severity): string => {
   }
 };
 
-const getSecurityCategoryLabel = (category: SecurityCategory | null | undefined): string => {
+export const getSecurityCategoryLabel = (category: SecurityCategory | null | undefined): string => {
   if (!category) return "";
   switch (category) {
     case "injection":
@@ -59,7 +60,9 @@ const getSecurityCategoryLabel = (category: SecurityCategory | null | undefined)
   }
 };
 
-const getExploitabilityLabel = (exploitability: Exploitability | null | undefined): string => {
+export const getExploitabilityLabel = (
+  exploitability: Exploitability | null | undefined,
+): string => {
   if (!exploitability) return "";
   switch (exploitability) {
     case "easy":
@@ -71,7 +74,7 @@ const getExploitabilityLabel = (exploitability: Exploitability | null | undefine
   }
 };
 
-const getImpactLabel = (impact: Impact | null | undefined): string => {
+export const getImpactLabel = (impact: Impact | null | undefined): string => {
   if (!impact) return "";
   switch (impact) {
     case "system_compromise":
@@ -91,7 +94,7 @@ const getImpactLabel = (impact: Impact | null | undefined): string => {
   }
 };
 
-const getSeverityOrder = (severity: Severity): number => {
+export const getSeverityOrder = (severity: Severity): number => {
   switch (severity) {
     case "critical":
       return 0;
@@ -106,15 +109,31 @@ const getSeverityOrder = (severity: Severity): number => {
   }
 };
 
+// Separate issues by severity: critical/high for inline, medium/low/info for aggregated
+export const separateIssuesBySeverity = (issues: ParsedReview["issues"]) => {
+  const criticalHigh: ParsedReview["issues"] = [];
+  const mediumLowInfo: ParsedReview["issues"] = [];
+
+  issues.forEach((issue) => {
+    if (issue.severity === "critical" || issue.severity === "high") {
+      criticalHigh.push(issue);
+    } else {
+      mediumLowInfo.push(issue);
+    }
+  });
+
+  return { criticalHigh, mediumLowInfo };
+};
+
 // Sort issues by severity only
-const sortIssues = (issues: ParsedReview["issues"]) => {
+export const sortIssues = (issues: ParsedReview["issues"]) => {
   return [...issues].sort((a, b) => {
     return getSeverityOrder(a.severity) - getSeverityOrder(b.severity);
   });
 };
 
 // Format text with proper paragraph breaks for markdown
-const formatParagraphs = (text: string): string => {
+export const formatParagraphs = (text: string): string => {
   // Split by double newlines (paragraph breaks) or single newline if followed by content
   // This preserves intentional paragraph breaks while handling various formats
   return text
@@ -124,7 +143,7 @@ const formatParagraphs = (text: string): string => {
     .join("\n\n");
 };
 
-const buildFilePermalink = (
+export const buildFilePermalink = (
   owner: string,
   repo: string,
   headSha: string,
@@ -143,6 +162,68 @@ const buildFilePermalink = (
   return baseUrl;
 };
 
+// Build metadata line for an issue (severity, category, exploitability, impact)
+export const buildMetadataLine = (issue: ParsedReview["issues"][0]): string => {
+  const formattedSeverity = issue.severity.charAt(0).toUpperCase() + issue.severity.slice(1);
+  const metadataLine: string[] = [`**Severity:** ${formattedSeverity}`];
+
+  if (issue.securityCategory) {
+    metadataLine.push(`**Category:** ${getSecurityCategoryLabel(issue.securityCategory)}`);
+  }
+
+  if (issue.exploitability) {
+    metadataLine.push(`**Exploitability:** ${getExploitabilityLabel(issue.exploitability)}`);
+  }
+
+  if (issue.impact) {
+    metadataLine.push(`**Impact:** ${getImpactLabel(issue.impact)}`);
+  }
+
+  return metadataLine.join(" | ");
+};
+
+// Format code snippet consistently
+export const formatCodeSnippet = (codeSnippet: string | null | undefined): string => {
+  if (!codeSnippet) {
+    return "";
+  }
+  return `\`\`\`\n${codeSnippet}\n\`\`\`\n\n`;
+};
+
+interface FormatExplanationProps {
+  explanation: string | null | undefined;
+}
+
+export const formatExplanation = ({ explanation }: FormatExplanationProps): string => {
+  if (!explanation) {
+    return "";
+  }
+  return `<details>\n<summary><strong>💡 Explanation</strong></summary>\n\n${formatParagraphs(explanation)}\n\n</details>\n\n`;
+};
+
+interface FormatSolutionProps {
+  suggestion: string | null | undefined;
+  codeSnippet: string | null | undefined;
+}
+
+export const formatSolution = ({ suggestion, codeSnippet }: FormatSolutionProps): string => {
+  if (!suggestion) {
+    return "";
+  }
+
+  const formattedSuggestion = formatParagraphs(suggestion);
+  const formattedCode = formatCodeSnippet(codeSnippet);
+
+  let output = `<details>\n<summary><strong>🛠️ Fix</strong></summary>\n\n`;
+  output += `${formattedSuggestion}\n\n`;
+  if (formattedCode) {
+    output += `**Code example:**\n\n${formattedCode}`;
+  }
+  output += `</details>\n\n`;
+  return output;
+};
+
+// Legacy function for backward compatibility (returns aggregated format)
 export const formatReviewResponse = ({
   review,
   owner,
@@ -154,73 +235,14 @@ export const formatReviewResponse = ({
     return null;
   }
 
-  let output = `## Saltman Code Review\n\n`;
-
-  // Sort issues by severity
-  const sortedIssues = sortIssues(review.issues);
-
-  sortedIssues.forEach((issue, index) => {
-    output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
-
-    // Build metadata line combining severity, category, exploitability, and impact
-    const formattedSeverity = issue.severity.charAt(0).toUpperCase() + issue.severity.slice(1);
-    const metadataLine: string[] = [`**Severity:** ${formattedSeverity}`];
-
-    // Add security category if present
-    if (issue.securityCategory) {
-      metadataLine.push(`**Category:** ${getSecurityCategoryLabel(issue.securityCategory)}`);
-    }
-
-    // Add exploitability and impact if present (only for vulnerabilities)
-    if (issue.exploitability) {
-      metadataLine.push(`**Exploitability:** ${getExploitabilityLabel(issue.exploitability)}`);
-    }
-    if (issue.impact) {
-      metadataLine.push(`**Impact:** ${getImpactLabel(issue.impact)}`);
-    }
-
-    output += `${metadataLine.join(" | ")}\n\n`;
-
-    // Brief description (visible by default)
-    if (issue.description) {
-      output += `${formatParagraphs(issue.description)}\n\n`;
-    }
-
-    // File and line reference with permalink (GitHub will auto-embed code snippet)
-    if (issue.location?.file) {
-      const { file, startLine, endLine } = issue.location;
-      const permalink = buildFilePermalink(
-        owner,
-        repo,
-        headSha,
-        file,
-        startLine ?? undefined,
-        endLine ?? undefined,
-      );
-      output += `${permalink}\n\n`;
-    }
-
-    // Detailed explanation in dropdown
-    if (issue.explanation) {
-      output += `<details>\n<summary><strong>Explanation</strong></summary>\n\n`;
-      output += `${formatParagraphs(issue.explanation)}\n\n`;
-      output += `</details>\n\n`;
-    }
-
-    // Solution in dropdown
-    if (issue.suggestion) {
-      output += `<details>\n<summary><strong>Solution</strong></summary>\n\n`;
-      output += `${formatParagraphs(issue.suggestion)}\n\n`;
-
-      // Code snippet (only if provided and relevant)
-      if (issue.codeSnippet) {
-        output += `**Code example:**\n\n\`\`\`\n${issue.codeSnippet}\n\`\`\`\n\n`;
-      }
-
-      output += `</details>\n\n`;
-    }
+  // For backward compatibility, return all issues in aggregated format
+  // Since this is legacy and we don't know if there are critical/high issues,
+  // we default to false (no critical/high issues) for a generic header
+  return formatAggregatedComment({
+    issues: review.issues,
+    owner,
+    repo,
+    headSha,
+    hasCriticalHighIssues: false,
   });
-
-  output += getSaltmanFooter({ owner, repo, commitSha: headSha });
-  return output;
 };

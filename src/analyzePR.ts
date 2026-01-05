@@ -1,7 +1,8 @@
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
-import { formatReviewResponse } from "./responses/format";
-import { getSaltmanFooter } from "./responses/shared";
+import { separateIssuesBySeverity } from "./responses/format";
+import { generateInlineComments, type InlineComment } from "./responses/inline";
+import { formatAggregatedComment } from "./responses/aggregated";
 import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema } from "./types";
 import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
@@ -12,22 +13,25 @@ interface AnalyzePRWithContextProps extends AnalyzePRProps {
   headSha: string;
 }
 
+export interface AnalysisResult {
+  inlineComments: InlineComment[];
+  aggregatedComment: string | null;
+  hasIssues: boolean;
+}
+
 export const analyzePR = async ({
   files,
   apiKey,
   owner,
   repo,
   headSha,
-}: AnalyzePRWithContextProps): Promise<string | null> => {
+}: AnalyzePRWithContextProps): Promise<AnalysisResult | null> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
 
+  // No text-based files to review - return null (no analysis performed)
   if (filesWithPatches.length === 0) {
-    return `## Saltman Code Review
-
-**Note:** No text-based file changes detected for code review.
-
-${getSaltmanFooter({ owner, repo, commitSha: headSha })}`;
+    return null;
   }
 
   try {
@@ -66,7 +70,39 @@ ${getSaltmanFooter({ owner, repo, commitSha: headSha })}`;
     }
 
     const parsedReview = response.output_parsed as ParsedReview;
-    return formatReviewResponse({ review: parsedReview, owner, repo, headSha });
+
+    // Return null if there are no issues
+    if (!parsedReview.issues || parsedReview.issues.length === 0) {
+      return {
+        inlineComments: [],
+        aggregatedComment: null,
+        hasIssues: false,
+      };
+    }
+
+    // Separate issues by severity
+    const { criticalHigh, mediumLowInfo } = separateIssuesBySeverity(parsedReview.issues);
+
+    // Generate inline comments for critical/high issues
+    const inlineComments = generateInlineComments({ issues: criticalHigh, owner, repo, headSha });
+
+    // Generate aggregated comment for medium/low/info issues
+    const aggregatedComment =
+      mediumLowInfo.length > 0
+        ? formatAggregatedComment({
+            issues: mediumLowInfo,
+            owner,
+            repo,
+            headSha,
+            hasCriticalHighIssues: criticalHigh.length > 0,
+          })
+        : null;
+
+    return {
+      inlineComments,
+      aggregatedComment,
+      hasIssues: true,
+    };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`OpenAI API error: ${errorMessage}`);
