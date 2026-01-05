@@ -12,10 +12,16 @@ async function run(): Promise<void> {
     // Get inputs
     const token = core.getInput("github-token", { required: true });
     const openaiApiKey = core.getInput("openai-api-key", { required: true });
+    const postComment = core.getInput("post-comment");
 
-    const { token: validatedToken, apiKey: validatedApiKey } = validateGithubInputs({
+    const {
+      token: validatedToken,
+      apiKey: validatedApiKey,
+      postComment: validatedPostComment,
+    } = validateGithubInputs({
       token,
       apiKey: openaiApiKey,
+      postComment,
     });
 
     // Initialize GitHub client
@@ -42,13 +48,15 @@ async function run(): Promise<void> {
 
     const analysis = await analyzePR({ files, apiKey: validatedApiKey, owner, repo, headSha });
 
-    // Post comment to PR
-    await octokit.rest.issues.createComment({
-      owner,
-      repo,
-      issue_number: prNumber,
-      body: analysis,
-    });
+    // Post comment to PR only if post-comment is explicitly set to true
+    if (validatedPostComment === true) {
+      await octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: prNumber,
+        body: analysis,
+      });
+    }
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
