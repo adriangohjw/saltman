@@ -70,23 +70,14 @@ export const formatAggregatedComment = ({
   return output;
 };
 
-// Build header for aggregated comment
 const buildAggregatedHeader = ({
   hasCriticalHighIssues,
 }: {
   hasCriticalHighIssues: boolean;
 }): string => {
-  const headers = {
-    withCriticalHigh: {
-      title: `## Saltman Code Review - Additional Findings`,
-      subtitle: `*Medium, low, and informational issues:*`,
-    },
-    withoutCriticalHigh: {
-      title: `## Saltman Code Review`,
-      subtitle: `*Findings:*`,
-    },
-  };
+  const title = hasCriticalHighIssues
+    ? "## Saltman Code Review - Additional Findings"
+    : "## Saltman Code Review";
 
-  const header = hasCriticalHighIssues ? headers.withCriticalHigh : headers.withoutCriticalHigh;
-  return `${header.title}\n\n${header.subtitle}\n\n`;
+  return `${title}\n\n`;
 };
