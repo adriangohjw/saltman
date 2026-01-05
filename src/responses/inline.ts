@@ -8,9 +8,11 @@ import {
   formatSolution,
 } from "./format";
 
+// Inline comment (always uses startLine and endLine, even for single-line issues)
 export interface InlineComment {
   path: string;
-  line: number;
+  startLine: number;
+  endLine: number;
   body: string;
 }
 
@@ -61,9 +63,16 @@ export const generateInlineComments = ({
   issues.forEach((issue) => {
     // Only create inline comments for issues with valid location and line numbers
     if (issue.location?.file && issue.location.startLine) {
+      // Always use startLine and endLine (use startLine for endLine if not provided)
+      const endLine =
+        issue.location.endLine && issue.location.endLine > issue.location.startLine
+          ? issue.location.endLine
+          : issue.location.startLine;
+
       inlineComments.push({
         path: issue.location.file,
-        line: issue.location.startLine,
+        startLine: issue.location.startLine,
+        endLine,
         body: formatInlineComment({ issue, owner, repo, headSha }),
       });
     }

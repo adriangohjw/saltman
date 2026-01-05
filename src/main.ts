@@ -53,7 +53,7 @@ async function run(): Promise<void> {
     // Post inline comments for critical/high issues
     if (analysis.inlineComments.length > 0) {
       // Create individual review comments for critical/high issues
-      // GitHub API requires the line to be in the diff, so we try inline first and fall back to regular comments
+      // If a comment fails (e.g., line number not in diff), we skip it to avoid incorrect line references
       for (const comment of analysis.inlineComments) {
         try {
           await octokit.rest.pulls.createReviewComment({
@@ -62,15 +62,22 @@ async function run(): Promise<void> {
             pull_number: prNumber,
             commit_id: headSha,
             path: comment.path,
-            line: comment.line,
             body: comment.body,
+            // For multi-line comments, we need both 'side' and 'start_side' to specify which side of the diff.
+            // side: the side where the comment ends (RIGHT = new file)
+            // start_side: the side where the comment starts (RIGHT = new file)
+            // We use RIGHT because we're reviewing the new code (the proposed changes).
+            side: "RIGHT",
+            start_side: "RIGHT",
+            start_line: comment.startLine,
+            line: comment.endLine, // For multi-line comments, 'line' is the end line (not 'end_line')
           });
         } catch (error) {
           // If inline comment fails (e.g., line number not in diff), skip it
           // This can happen if the LLM provides a line number that's not in the changed lines
           // We skip rather than fall back to avoid posting potentially incorrect line references
           console.warn(
-            `Skipping inline comment for ${comment.path}:${comment.line}: ${error instanceof Error ? error.message : "Unknown error"}`,
+            `Skipping inline comment for ${comment.path}:${comment.startLine}-${comment.endLine}: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
         }
       }
