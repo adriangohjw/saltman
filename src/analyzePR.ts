@@ -27,7 +27,7 @@ export const analyzePR = async ({
 
 **Note:** No text-based file changes detected for code review.
 
-${getSaltmanFooter(owner, repo, headSha)}`;
+${getSaltmanFooter({ owner, repo, commitSha: headSha })}`;
   }
 
   try {

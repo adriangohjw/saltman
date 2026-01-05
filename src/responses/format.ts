@@ -252,6 +252,6 @@ export const formatReviewResponse = ({
     output += `No issues detected! 🎉\n\n`;
   }
 
-  output += getSaltmanFooter(owner, repo, headSha);
+  output += getSaltmanFooter({ owner, repo, commitSha: headSha });
   return output;
 };
