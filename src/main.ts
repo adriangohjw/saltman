@@ -10,22 +10,18 @@ import { validateGithubInputs } from "./validations/githubInputs";
 async function run(): Promise<void> {
   try {
     // Get inputs
-    const token = core.getInput("github-token", { required: true });
-    const openaiApiKey = core.getInput("openai-api-key", { required: true });
-    const postComment = core.getInput("post-comment");
+    const inputToken = core.getInput("github-token", { required: true });
+    const inputOpenaiApiKey = core.getInput("openai-api-key", { required: true });
+    const inputPostComment = core.getInput("post-comment");
 
-    const {
-      token: validatedToken,
-      apiKey: validatedApiKey,
-      postComment: validatedPostComment,
-    } = validateGithubInputs({
-      token,
-      apiKey: openaiApiKey,
-      postComment,
+    const { token, apiKey, postComment } = validateGithubInputs({
+      token: inputToken,
+      apiKey: inputOpenaiApiKey,
+      postComment: inputPostComment,
     });
 
     // Initialize GitHub client
-    const octokit = github.getOctokit(validatedToken);
+    const octokit = github.getOctokit(token);
     const context = github.context;
 
     const { prNumber, username } = getContextValues({ context });
@@ -46,10 +42,10 @@ async function run(): Promise<void> {
 
     const files = await getPullRequestFiles({ octokit, owner, repo, prNumber });
 
-    const analysis = await analyzePR({ files, apiKey: validatedApiKey, owner, repo, headSha });
+    const analysis = await analyzePR({ files, apiKey, owner, repo, headSha });
 
     // Post comment to PR only if post-comment is explicitly set to true
-    if (validatedPostComment === true) {
+    if (postComment === true) {
       await octokit.rest.issues.createComment({
         owner,
         repo,
