@@ -62,15 +62,20 @@ async function run(): Promise<void> {
             pull_number: prNumber,
             commit_id: headSha,
             path: comment.path,
-            line: comment.line,
             body: comment.body,
+            // side is required because diffs have two sides (LEFT=old file, RIGHT=new file).
+            // Line numbers exist on both sides, so we must specify which side to comment on.
+            // We use RIGHT because we're reviewing the new code (the proposed changes).
+            side: "RIGHT",
+            start_line: comment.startLine,
+            end_line: comment.endLine,
           });
         } catch (error) {
           // If inline comment fails (e.g., line number not in diff), skip it
           // This can happen if the LLM provides a line number that's not in the changed lines
           // We skip rather than fall back to avoid posting potentially incorrect line references
           console.warn(
-            `Skipping inline comment for ${comment.path}:${comment.line}: ${error instanceof Error ? error.message : "Unknown error"}`,
+            `Skipping inline comment for ${comment.path}:${comment.startLine}-${comment.endLine}: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
         }
       }
