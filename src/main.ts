@@ -1,8 +1,8 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { getContextValues } from "./getContextValues";
-import { validateUserAccess } from "./validateUserAccess";
-import { validatePullRequestAccess } from "./validatePullRequestAccess";
+import { validateUserAccess } from "./validations/validateUserAccess";
+import { validatePullRequestAccess } from "./validations/validatePullRequestAccess";
 import { analyzePR } from "./analyzePR";
 import { getPullRequestFiles } from "./getPullRequestFiles";
 import { validateGithubInputs } from "./validations/githubInputs";
