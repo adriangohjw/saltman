@@ -168,88 +168,88 @@ export const formatReviewResponse = ({
   owner,
   repo,
   headSha,
-}: FormatReviewResponseProps): string => {
+}: FormatReviewResponseProps): string | null => {
+  // Return null if there are no issues
+  if (!review.issues || review.issues.length === 0) {
+    return null;
+  }
+
   let output = `## Saltman Code Review\n\n`;
 
-  // Issues
-  if (review.issues && review.issues.length > 0) {
-    // Sort issues: security first (by severity), then bugs, then performance
-    const sortedIssues = sortIssues(review.issues);
+  // Sort issues: security first (by severity), then bugs, then performance
+  const sortedIssues = sortIssues(review.issues);
 
-    sortedIssues.forEach((issue, index) => {
-      output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
+  sortedIssues.forEach((issue, index) => {
+    output += `### ${index + 1}. ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
-      // Build metadata line combining severity, category, exploitability, and impact
-      const formattedSeverity = issue.severity.charAt(0).toUpperCase() + issue.severity.slice(1);
-      const metadataLine: string[] = [`**Severity:** ${formattedSeverity}`];
+    // Build metadata line combining severity, category, exploitability, and impact
+    const formattedSeverity = issue.severity.charAt(0).toUpperCase() + issue.severity.slice(1);
+    const metadataLine: string[] = [`**Severity:** ${formattedSeverity}`];
 
-      // Add security category and metadata based on issue type
-      switch (issue.type) {
-        case "vulnerability":
-        case "misconfiguration":
-          if (issue.securityCategory) {
-            metadataLine.push(`**Category:** ${getSecurityCategoryLabel(issue.securityCategory)}`);
-          }
-          break;
-        case "best_practice":
-          // No category for best practices
-          break;
-      }
-
-      // Add exploitability and impact for vulnerability issues
-      if (issue.type === "vulnerability") {
-        if (issue.exploitability) {
-          metadataLine.push(`**Exploitability:** ${getExploitabilityLabel(issue.exploitability)}`);
+    // Add security category and metadata based on issue type
+    switch (issue.type) {
+      case "vulnerability":
+      case "misconfiguration":
+        if (issue.securityCategory) {
+          metadataLine.push(`**Category:** ${getSecurityCategoryLabel(issue.securityCategory)}`);
         }
-        if (issue.impact) {
-          metadataLine.push(`**Impact:** ${getImpactLabel(issue.impact)}`);
-        }
+        break;
+      case "best_practice":
+        // No category for best practices
+        break;
+    }
+
+    // Add exploitability and impact for vulnerability issues
+    if (issue.type === "vulnerability") {
+      if (issue.exploitability) {
+        metadataLine.push(`**Exploitability:** ${getExploitabilityLabel(issue.exploitability)}`);
+      }
+      if (issue.impact) {
+        metadataLine.push(`**Impact:** ${getImpactLabel(issue.impact)}`);
+      }
+    }
+
+    output += `${metadataLine.join(" | ")}\n\n`;
+
+    // Brief description (visible by default)
+    if (issue.description) {
+      output += `${formatParagraphs(issue.description)}\n\n`;
+    }
+
+    // File and line reference with permalink (GitHub will auto-embed code snippet)
+    if (issue.location?.file) {
+      const { file, startLine, endLine } = issue.location;
+      const permalink = buildFilePermalink(
+        owner,
+        repo,
+        headSha,
+        file,
+        startLine ?? undefined,
+        endLine ?? undefined,
+      );
+      output += `${permalink}\n\n`;
+    }
+
+    // Detailed explanation in dropdown
+    if (issue.explanation) {
+      output += `<details>\n<summary><strong>Explanation</strong></summary>\n\n`;
+      output += `${formatParagraphs(issue.explanation)}\n\n`;
+      output += `</details>\n\n`;
+    }
+
+    // Solution in dropdown
+    if (issue.suggestion) {
+      output += `<details>\n<summary><strong>Solution</strong></summary>\n\n`;
+      output += `${formatParagraphs(issue.suggestion)}\n\n`;
+
+      // Code snippet (only if provided and relevant)
+      if (issue.codeSnippet) {
+        output += `**Code example:**\n\n\`\`\`\n${issue.codeSnippet}\n\`\`\`\n\n`;
       }
 
-      output += `${metadataLine.join(" | ")}\n\n`;
-
-      // Brief description (visible by default)
-      if (issue.description) {
-        output += `${formatParagraphs(issue.description)}\n\n`;
-      }
-
-      // File and line reference with permalink (GitHub will auto-embed code snippet)
-      if (issue.location?.file) {
-        const { file, startLine, endLine } = issue.location;
-        const permalink = buildFilePermalink(
-          owner,
-          repo,
-          headSha,
-          file,
-          startLine ?? undefined,
-          endLine ?? undefined,
-        );
-        output += `${permalink}\n\n`;
-      }
-
-      // Detailed explanation in dropdown
-      if (issue.explanation) {
-        output += `<details>\n<summary><strong>Explanation</strong></summary>\n\n`;
-        output += `${formatParagraphs(issue.explanation)}\n\n`;
-        output += `</details>\n\n`;
-      }
-
-      // Solution in dropdown
-      if (issue.suggestion) {
-        output += `<details>\n<summary><strong>Solution</strong></summary>\n\n`;
-        output += `${formatParagraphs(issue.suggestion)}\n\n`;
-
-        // Code snippet (only if provided and relevant)
-        if (issue.codeSnippet) {
-          output += `**Code example:**\n\n\`\`\`\n${issue.codeSnippet}\n\`\`\`\n\n`;
-        }
-
-        output += `</details>\n\n`;
-      }
-    });
-  } else {
-    output += `No issues detected! 🎉\n\n`;
-  }
+      output += `</details>\n\n`;
+    }
+  });
 
   output += getSaltmanFooter({ owner, repo, commitSha: headSha });
   return output;

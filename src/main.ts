@@ -6,6 +6,7 @@ import { validatePullRequestAccess } from "./validations/validatePullRequestAcce
 import { analyzePR } from "./analyzePR";
 import { getPullRequestFiles } from "./getPullRequestFiles";
 import { validateGithubInputs } from "./validations/githubInputs";
+import { getSaltmanFooter } from "./responses/shared";
 
 async function run(): Promise<void> {
   try {
@@ -45,13 +46,21 @@ async function run(): Promise<void> {
     const analysis = await analyzePR({ files, apiKey, owner, repo, headSha });
 
     // Always post comment when issues are detected, or when no issues are detected and postCommentWhenNoIssues is enabled
-    const hasNoIssues = analysis.includes("No issues detected!");
-    if (!hasNoIssues || postCommentWhenNoIssues) {
+    if (analysis !== null) {
+      // Issues detected - always post
       await octokit.rest.issues.createComment({
         owner,
         repo,
         issue_number: prNumber,
         body: analysis,
+      });
+    } else if (postCommentWhenNoIssues) {
+      // No issues detected - only post if postCommentWhenNoIssues is enabled
+      await octokit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: prNumber,
+        body: `## Saltman Code Review\n\nNo issues detected! 🎉\n\n${getSaltmanFooter({ owner, repo, commitSha: headSha })}`,
       });
     }
   } catch (error) {

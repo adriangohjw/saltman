@@ -18,7 +18,7 @@ export const analyzePR = async ({
   owner,
   repo,
   headSha,
-}: AnalyzePRWithContextProps): Promise<string> => {
+}: AnalyzePRWithContextProps): Promise<string | null> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
 
