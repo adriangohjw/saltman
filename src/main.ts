@@ -7,6 +7,7 @@ import { analyzePR } from "./analyzePR";
 import { getPullRequestFiles } from "./getPullRequestFiles";
 import { validateGithubInputs } from "./validations/githubInputs";
 import { getSaltmanFooter } from "./responses/shared";
+import { filterIgnoredFiles } from "./filterIgnoredFiles";
 
 async function run(): Promise<void> {
   try {
@@ -14,11 +15,13 @@ async function run(): Promise<void> {
     const inputToken = core.getInput("github-token", { required: true });
     const inputOpenaiApiKey = core.getInput("openai-api-key", { required: true });
     const inputPostCommentWhenNoIssues = core.getInput("post-comment-when-no-issues");
+    const inputIgnorePatterns = core.getInput("ignore-patterns");
 
-    const { token, apiKey, postCommentWhenNoIssues } = validateGithubInputs({
+    const { token, apiKey, postCommentWhenNoIssues, ignorePatterns } = validateGithubInputs({
       token: inputToken,
       apiKey: inputOpenaiApiKey,
       postCommentWhenNoIssues: inputPostCommentWhenNoIssues,
+      ignorePatterns: inputIgnorePatterns,
     });
 
     // Initialize GitHub client
@@ -43,7 +46,10 @@ async function run(): Promise<void> {
 
     const files = await getPullRequestFiles({ octokit, owner, repo, prNumber });
 
-    const analysis = await analyzePR({ files, apiKey, owner, repo, headSha });
+    // Filter out files that match ignore patterns
+    const filteredFiles = filterIgnoredFiles({ files, ignorePatterns });
+
+    const analysis = await analyzePR({ files: filteredFiles, apiKey, owner, repo, headSha });
 
     // If no analysis was performed (e.g., no text files), skip posting comments
     if (!analysis) {

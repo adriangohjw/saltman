@@ -14,6 +14,17 @@ const GithubInputsSchema = z.object({
       if (val === undefined || val === "") return undefined;
       return val === "true";
     }),
+  ignorePatterns: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val === undefined || val === "") return undefined;
+      // Split by newlines and filter out empty lines
+      return val
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+    }),
 });
 
 export type GithubInputs = z.infer<typeof GithubInputsSchema>;
