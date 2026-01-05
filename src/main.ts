@@ -45,17 +45,55 @@ async function run(): Promise<void> {
 
     const analysis = await analyzePR({ files, apiKey, owner, repo, headSha });
 
-    // Always post comment when issues are detected, or when no issues are detected and postCommentWhenNoIssues is enabled
-    if (analysis !== null) {
-      // Issues detected - always post
+    // If no analysis was performed (e.g., no text files), skip posting comments
+    if (!analysis) {
+      return;
+    }
+
+    // Post inline comments for critical/high issues
+    if (analysis.inlineComments.length > 0) {
+      // Create individual review comments for critical/high issues
+      // GitHub API requires the line to be in the diff, so we try inline first and fall back to regular comments
+      for (const comment of analysis.inlineComments) {
+        try {
+          await octokit.rest.pulls.createReviewComment({
+            owner,
+            repo,
+            pull_number: prNumber,
+            commit_id: headSha,
+            path: comment.path,
+            line: comment.line,
+            body: comment.body,
+          });
+        } catch (error) {
+          // If inline comment fails (e.g., line number not in diff), fall back to regular comment
+          // This can happen if the LLM provides a line number that's not in the changed lines
+          console.warn(
+            `Failed to create inline comment for ${comment.path}:${comment.line}: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+          // Post as regular comment instead - still visible but not inline
+          await octokit.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: prNumber,
+            body: `**🔴 Critical/High Issue: ${comment.path}:${comment.line}**\n\n${comment.body}`,
+          });
+        }
+      }
+    }
+
+    // Post aggregated comment for medium/low/info issues
+    if (analysis.aggregatedComment) {
       await octokit.rest.issues.createComment({
         owner,
         repo,
         issue_number: prNumber,
-        body: analysis,
+        body: analysis.aggregatedComment,
       });
-    } else if (postCommentWhenNoIssues) {
-      // No issues detected - only post if postCommentWhenNoIssues is enabled
+    }
+
+    // Post "no issues" comment if enabled and no issues found
+    if (!analysis.hasIssues && postCommentWhenNoIssues) {
       await octokit.rest.issues.createComment({
         owner,
         repo,
