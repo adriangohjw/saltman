@@ -198,7 +198,7 @@ export const formatExplanation = ({ explanation }: FormatExplanationProps): stri
   if (!explanation) {
     return "";
   }
-  return `<details>\n<summary><strong>Explanation</strong></summary>\n\n${formatParagraphs(explanation)}\n\n</details>\n\n`;
+  return `<details>\n<summary><strong>💡 Explanation</strong></summary>\n\n${formatParagraphs(explanation)}\n\n</details>\n\n`;
 };
 
 interface FormatSolutionProps {
@@ -214,7 +214,7 @@ export const formatSolution = ({ suggestion, codeSnippet }: FormatSolutionProps)
   const formattedSuggestion = formatParagraphs(suggestion);
   const formattedCode = formatCodeSnippet(codeSnippet);
 
-  let output = `<details>\n<summary><strong>💡 Fix</strong></summary>\n\n`;
+  let output = `<details>\n<summary><strong>🛠️ Fix</strong></summary>\n\n`;
   output += `${formattedSuggestion}\n\n`;
   if (formattedCode) {
     output += `**Code example:**\n\n${formattedCode}`;
