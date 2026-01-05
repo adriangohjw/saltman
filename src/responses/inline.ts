@@ -23,7 +23,7 @@ interface FormatInlineCommentProps {
 
 // Format a single issue for inline comment (concise and actionable)
 const formatInlineComment = ({ issue, owner, repo, headSha }: FormatInlineCommentProps): string => {
-  let output = `${getSeverityEmoji(issue.severity)} **${issue.title}**\n\n`;
+  let output = `### ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
   // Build metadata line
   output += `${buildMetadataLine(issue)}\n\n`;
