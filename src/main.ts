@@ -66,18 +66,12 @@ async function run(): Promise<void> {
             body: comment.body,
           });
         } catch (error) {
-          // If inline comment fails (e.g., line number not in diff), fall back to regular comment
+          // If inline comment fails (e.g., line number not in diff), skip it
           // This can happen if the LLM provides a line number that's not in the changed lines
+          // We skip rather than fall back to avoid posting potentially incorrect line references
           console.warn(
-            `Failed to create inline comment for ${comment.path}:${comment.line}: ${error instanceof Error ? error.message : "Unknown error"}`,
+            `Skipping inline comment for ${comment.path}:${comment.line}: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
-          // Post as regular comment instead - still visible but not inline
-          await octokit.rest.issues.createComment({
-            owner,
-            repo,
-            issue_number: prNumber,
-            body: `**🔴 Critical/High Issue: ${comment.path}:${comment.line}**\n\n${comment.body}`,
-          });
         }
       }
     }
