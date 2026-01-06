@@ -5,11 +5,13 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
+    "build:native": "tsgo",
     "package": "bun run build && bun pack",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "oxlint src",
     "lint:fix": "oxlint --fix src",
     "typecheck": "tsc --noEmit",
+    "typecheck:native": "tsgo --noEmit",
     "format": "oxfmt --check src",
     "format:fix": "oxfmt src"
   },
@@ -25,8 +27,9 @@
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
-    "oxlint": "^1.38.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260106.1",
     "oxfmt": "^0.23.0",
+    "oxlint": "^1.38.0",
     "typescript": "^5.9.3"
   },
   "packageManager": "bun@1.3.5"
