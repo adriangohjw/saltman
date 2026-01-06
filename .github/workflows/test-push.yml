@@ -6,7 +6,7 @@ on:
 
 jobs:
   security-review:
-    name: "🔒 Security Review"
+    name: "🔒 Saltman Action (Push)"
     runs-on: ubuntu-latest
     permissions:
       contents: read

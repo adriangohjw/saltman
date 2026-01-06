@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    name: "🔬 Test Saltman Action"
+    name: "🔒 Saltman Action (PR)"
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
