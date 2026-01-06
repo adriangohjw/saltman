@@ -20,7 +20,9 @@
   "dependencies": {
     "@actions/core": "^2.0.1",
     "@actions/github": "^6.0.1",
+    "@ai-sdk/openai-compatible": "2.0.4",
     "@anthropic-ai/sdk": "^0.71.2",
+    "ai": "^6.0.14",
     "minimatch": "^10.1.1",
     "openai": "^6.15.0",
     "zod": "^4.3.5"
