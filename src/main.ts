@@ -20,19 +20,31 @@ async function run(): Promise<void> {
     const inputToken = core.getInput("github-token", { required: true });
     const inputProvider = core.getInput("provider", { required: true });
     const inputApiKey = core.getInput("api-key", { required: true });
+    const inputBaseUrl = core.getInput("base-url");
+    const inputModel = core.getInput("model");
     const inputPostCommentWhenNoIssues = core.getInput("post-comment-when-no-issues");
     const inputIgnorePatterns = core.getInput("ignore-patterns");
     const inputTargetBranch = core.getInput("target-branch");
 
-    const { token, provider, apiKey, postCommentWhenNoIssues, ignorePatterns, targetBranch } =
-      validateGithubInputs({
-        token: inputToken,
-        provider: inputProvider,
-        apiKey: inputApiKey,
-        postCommentWhenNoIssues: inputPostCommentWhenNoIssues,
-        ignorePatterns: inputIgnorePatterns,
-        targetBranch: inputTargetBranch,
-      });
+    const {
+      token,
+      provider,
+      apiKey,
+      baseUrl,
+      model,
+      postCommentWhenNoIssues,
+      ignorePatterns,
+      targetBranch,
+    } = validateGithubInputs({
+      token: inputToken,
+      provider: inputProvider,
+      apiKey: inputApiKey,
+      baseUrl: inputBaseUrl,
+      model: inputModel,
+      postCommentWhenNoIssues: inputPostCommentWhenNoIssues,
+      ignorePatterns: inputIgnorePatterns,
+      targetBranch: inputTargetBranch,
+    });
 
     // Initialize GitHub client
     const octokit = github.getOctokit(token);
@@ -74,6 +86,8 @@ async function run(): Promise<void> {
         repo,
         headSha,
         provider,
+        baseUrl,
+        model,
       });
 
       // If no analysis was performed (e.g., no text files), skip posting comments
@@ -195,6 +209,8 @@ async function run(): Promise<void> {
         repo,
         headSha,
         provider,
+        baseUrl,
+        model,
       });
 
       // If no analysis was performed (e.g., no text files), skip creating issue

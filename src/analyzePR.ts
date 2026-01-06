@@ -3,6 +3,8 @@ import { zodTextFormat } from "openai/helpers/zod";
 import Anthropic from "@anthropic-ai/sdk";
 import * as core from "@actions/core";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { generateText, Output } from "ai";
 import { separateIssuesBySeverity } from "./responses/format";
 import { generateInlineComments, type InlineComment } from "./responses/inline";
 import { formatAggregatedComment } from "./responses/aggregated";
@@ -12,11 +14,11 @@ import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
 import type { GithubInputs } from "./validations/githubInputs";
 import { estimateMaxTokens } from "./utils/estimateMaxTokens";
 
-interface AnalyzePRWithContextProps extends AnalyzePRProps {
+interface AnalyzePRWithContextProps
+  extends AnalyzePRProps, Pick<GithubInputs, "provider" | "baseUrl" | "model"> {
   owner: string;
   repo: string;
   headSha: string;
-  provider: GithubInputs["provider"];
 }
 
 export interface AnalysisResult {
@@ -89,6 +91,36 @@ const callAnthropic = async (apiKey: string, diff: string): Promise<ParsedReview
   return ReviewResponseSchema.parse(parsed);
 };
 
+const callOpenAICompatible = async (
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  diff: string,
+): Promise<ParsedReview> => {
+  const openaiCompatible = createOpenAICompatible({
+    name: "openai-compatible",
+    baseURL: baseUrl,
+    apiKey: apiKey,
+  });
+
+  const { text } = await generateText({
+    model: openaiCompatible.chatModel(model),
+    system: getSystemMessage(),
+    prompt: buildAnalysisPrompt(diff),
+    experimental_output: Output.object({
+      schema: ReviewResponseSchema,
+    }),
+  });
+
+  if (!text) {
+    throw new Error(
+      "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
+    );
+  }
+
+  return ReviewResponseSchema.parse(JSON.parse(text));
+};
+
 export const analyzePR = async ({
   files,
   apiKey,
@@ -96,6 +128,8 @@ export const analyzePR = async ({
   repo,
   headSha,
   provider,
+  baseUrl,
+  model,
 }: AnalyzePRWithContextProps): Promise<AnalysisResult | null> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
@@ -121,6 +155,15 @@ export const analyzePR = async ({
         break;
       case "openai":
         parsedReview = await callOpenAI(apiKey, diff);
+        break;
+      case "openai-compatible":
+        if (!baseUrl) {
+          throw new Error('base-url is required when provider is "openai-compatible"');
+        }
+        if (!model) {
+          throw new Error('model is required when provider is "openai-compatible"');
+        }
+        parsedReview = await callOpenAICompatible(apiKey, baseUrl, model, diff);
         break;
       default:
         const _exhaustiveCheck: never = provider;
