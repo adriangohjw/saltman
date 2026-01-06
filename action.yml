@@ -28,6 +28,9 @@ inputs:
   target-branch:
     description: 'Branch name to monitor for direct pushes. When set and action is triggered on push event, creates a GitHub issue instead of PR comments. Only used when triggered on push events.'
     required: false
+  ping-users:
+    description: 'Space or newline-separated list of GitHub usernames or teams to ping in push mode (e.g., "@team/security @user1 @user2"). Only used in push mode when creating issues.'
+    required: false
 runs:
   using: 'composite'
   steps:
@@ -51,4 +54,5 @@ runs:
         INPUT_POST-COMMENT-WHEN-NO-ISSUES: ${{ inputs.post-comment-when-no-issues }}
         INPUT_IGNORE-PATTERNS: ${{ inputs.ignore-patterns }}
         INPUT_TARGET-BRANCH: ${{ inputs.target-branch }}
+        INPUT_PING-USERS: ${{ inputs.ping-users }}
 

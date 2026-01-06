@@ -9,6 +9,8 @@ A reusable GitHub Action that analyzes code changes and posts security and quali
   - Posts aggregated comments for medium/low/info issues
 - **Push Mode**: Triggers on direct pushes to a specific branch
   - Creates GitHub issues with all findings when security issues are detected
+  - Automatically pings the commit pusher
+  - Supports configurable additional pings via `ping-users` input
 - **AI-powered code review** using OpenAI (recommended), Anthropic Claude Opus, or any OpenAI-compatible API provider
 - **File ignore patterns** - Exclude files from analysis using glob patterns (similar to `.eslintignore` or `.gitignore`)
 - Written in TypeScript
@@ -86,6 +88,9 @@ jobs:
           provider: openai  # Must be either "openai", "anthropic", or "openai-compatible". OpenAI is recommended.
           api-key: ${{ secrets.OPENAI_API_KEY }}  # API key for the specified provider
           target-branch: main  # Required for push mode: branch to monitor
+          ping-users: |  # Optional: additional users/teams to ping in push mode
+            @team/security
+            @security-leads
           ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
             **/*.md
             package.json
@@ -137,15 +142,29 @@ jobs:
 - `model` (required when `provider` is `"openai-compatible"`): Model name to use with your OpenAI-compatible provider. This should match the model identifier your API expects (e.g., `"gpt-4"`, `"gpt-3.5-turbo"`, or your custom model name).
 - `post-comment-when-no-issues` (optional, PR mode only): Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false` if not provided (no comment will be posted). **Mutually exclusive with `target-branch`**.
 - `target-branch` (optional, Push mode only): Branch name to monitor for direct pushes. When set and action is triggered on a push event, creates a GitHub issue instead of PR comments. The action will only run when someone pushes directly to this branch. **Mutually exclusive with `post-comment-when-no-issues`**.
-- `ignore-patterns` (optional): Newline-separated list of glob patterns to exclude files from analysis. Similar to `.eslintignore` or `.gitignore` patterns. Files matching any pattern will be skipped during analysis. Examples:
-  - `**/*.test.ts` - Ignore all test files
-  - `**/node_modules/**` - Ignore node_modules directory
-  - `examples/**` - Ignore entire examples directory
-  - `*.md` - Ignore all markdown files
+- `ping-users` (optional, Push mode only): Newline-separated list of GitHub usernames or teams to ping in push mode when creating issues. All items must start with `@`. These will be added to the issue footer along with the commit pusher. All mentions are automatically deduplicated. Example:
+    ```yaml
+    ping-users: |
+      @team/security
+      @security-leads
+      @user1
+    ```
+- `ignore-patterns` (optional): Newline-separated list of glob patterns to exclude files from analysis. Similar to `.eslintignore` or `.gitignore` patterns. Files matching any pattern will be skipped during analysis. Example:
+    ```yaml
+    ignore-patterns: |
+      **/*.test.ts
+      **/*.spec.ts
+      **/node_modules/**
+      examples/**
+      *.md
+    ```
 
 **Mode Selection:**
 - **PR Mode**: Use `post-comment-when-no-issues` (or omit both). Creates PR comments.
-- **Push Mode**: Use `target-branch`. Creates GitHub issues.
+- **Push Mode**: Use `target-branch`. Creates GitHub issues. In push mode, the action automatically:
+  - Pings the person who pushed the commit
+  - Pings any additional users/teams specified in `ping-users`
+  - All mentions are automatically deduplicated
 - These two inputs are mutually exclusive - you cannot use both in the same workflow.
 
 ### Outputs
