@@ -48,15 +48,6 @@ async function run(): Promise<void> {
 
     // Determine if we're in push mode (push event with target branch specified)
     const isPushMode = !isPullRequest && context.eventName === "push" && targetBranch;
-    const currentBranch = context.ref.replace("refs/heads/", "");
-
-    if (isPushMode && currentBranch !== targetBranch) {
-      // Push event but not on target branch, skip
-      core.info(
-        `Push event detected but branch '${currentBranch}' does not match target branch '${targetBranch}'. Skipping.`,
-      );
-      return;
-    }
 
     if (isPullRequest) {
       // PR mode - existing behavior
@@ -137,6 +128,15 @@ async function run(): Promise<void> {
         });
       }
     } else if (isPushMode) {
+      const currentBranch = context.ref.replace("refs/heads/", "");
+      if (currentBranch !== targetBranch) {
+        // Push event but not on target branch, skip
+        core.info(
+          `Push event detected but branch '${currentBranch}' does not match target branch '${targetBranch}'. Skipping.`,
+        );
+        return;
+      }
+
       // Push mode - create GitHub issue
       const headSha = contextValues.commitSha;
       const baseSha = context.payload.before;
