@@ -1,12 +1,15 @@
 # Saltman
 
-A reusable GitHub Action that analyzes pull request content and posts results as a comment.
+A reusable GitHub Action that analyzes code changes and posts security and quality findings. Supports both pull request reviews (via PR comments) and direct branch pushes (via GitHub issues).
 
 ## Features
 
-- Triggers on PR creation and when new commits are pushed to a PR
+- **PR Mode**: Triggers on PR creation and when new commits are pushed to a PR
+  - Posts inline comments for critical/high severity issues
+  - Posts aggregated comments for medium/low/info issues
+- **Push Mode**: Triggers on direct pushes to a specific branch
+  - Creates GitHub issues with all findings when security issues are detected
 - **AI-powered code review** using OpenAI's LLM
-- Optionally posts analysis results as a GitHub comment (configurable)
 - **File ignore patterns** - Exclude files from analysis using glob patterns (similar to `.eslintignore` or `.gitignore`)
 - Written in TypeScript
 
@@ -19,7 +22,9 @@ Before others can use your action, you need to:
 1. **Push your repository to GitHub** (make it public or ensure users have access)
 2. **Ensure your main branch is up to date** - users will reference `@main` to get the latest version
 
-### Basic Usage
+### PR Mode (Default)
+
+Analyze pull requests and post comments directly on the PR:
 
 ```yaml
 name: 'Analyze PR'
@@ -31,7 +36,14 @@ on:
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+      issues: write
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Run Saltman
         uses: adriangohjw/saltman@main
         with:
@@ -45,18 +57,57 @@ jobs:
             examples/**
 ```
 
+### Push Mode (Create Issues)
+
+Monitor direct pushes to a specific branch and create GitHub issues:
+
+```yaml
+name: 'Security Review on Push to Main'
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Saltman
+        uses: adriangohjw/saltman@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          target-branch: main  # Required for push mode: branch to monitor
+          ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
+            **/*.md
+            package.json
+            bun.lockb
+```
+
 **Note:** Replace `adriangohjw/saltman@main` with your own repository path. Using `@main` will always use the latest commit on the main branch.
 
 ### Inputs
 
 - `github-token` (required): GitHub token for API access. Use `${{ secrets.GITHUB_TOKEN }}` for automatic token.
 - `openai-api-key` (required): OpenAI API key for LLM-powered code review. Store this as a secret in your repository settings (e.g., `OPENAI_API_KEY`).
-- `post-comment-when-no-issues` (optional): Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false` if not provided (no comment will be posted).
-- `ignore-patterns` (optional): Newline-separated list of glob patterns to exclude files from PR analysis. Similar to `.eslintignore` or `.gitignore` patterns. Files matching any pattern will be skipped during analysis. Examples:
+- `post-comment-when-no-issues` (optional, PR mode only): Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false` if not provided (no comment will be posted). **Mutually exclusive with `target-branch`**.
+- `target-branch` (optional, Push mode only): Branch name to monitor for direct pushes. When set and action is triggered on a push event, creates a GitHub issue instead of PR comments. The action will only run when someone pushes directly to this branch. **Mutually exclusive with `post-comment-when-no-issues`**.
+- `ignore-patterns` (optional): Newline-separated list of glob patterns to exclude files from analysis. Similar to `.eslintignore` or `.gitignore` patterns. Files matching any pattern will be skipped during analysis. Examples:
   - `**/*.test.ts` - Ignore all test files
   - `**/node_modules/**` - Ignore node_modules directory
   - `examples/**` - Ignore entire examples directory
   - `*.md` - Ignore all markdown files
+
+**Mode Selection:**
+- **PR Mode**: Use `post-comment-when-no-issues` (or omit both). Creates PR comments.
+- **Push Mode**: Use `target-branch`. Creates GitHub issues.
+- These two inputs are mutually exclusive - you cannot use both in the same workflow.
 
 ### Outputs
 
