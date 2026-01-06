@@ -1,4 +1,5 @@
 import { getSaltmanFooter } from "./shared";
+import { getHeadSha } from "../utils/getHeadSha";
 import type { ParsedReview } from "../types";
 import {
   getSeverityEmoji,
@@ -14,13 +15,15 @@ export const formatSingleIssueForIssue = ({
   issue,
   owner,
   repo,
-  headSha,
+  commitShas,
 }: {
   issue: ParsedReview["issues"][0];
   owner: string;
   repo: string;
-  headSha: string;
+  commitShas: string[];
 }): string => {
+  const headSha = getHeadSha(commitShas);
+
   // Add Saltman label to the title, which can be used for dedeuplication of issues
   let output = `## ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
@@ -49,7 +52,11 @@ export const formatSingleIssueForIssue = ({
 
   output += formatSolution({ suggestion: issue.suggestion, codeSnippet: issue.codeSnippet });
 
-  output += getSaltmanFooter({ owner, repo, commitSha: headSha });
+  output += getSaltmanFooter({
+    owner,
+    repo,
+    commitShas,
+  });
 
   return output;
 };

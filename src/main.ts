@@ -60,12 +60,26 @@ async function run(): Promise<void> {
       });
       const headSha = prResponse.data.head.sha;
 
+      // Get all commits in the PR
+      const commitsResponse = await octokit.rest.pulls.listCommits({
+        owner,
+        repo,
+        pull_number: prNumber!,
+      });
+      const commitShas = commitsResponse.data.map((commit) => commit.sha);
+
       const files = await getPullRequestFiles({ octokit, owner, repo, prNumber: prNumber! });
 
       // Filter out files that match ignore patterns
       const filteredFiles = filterIgnoredFiles({ files, ignorePatterns });
 
-      const analysis = await analyzePR({ files: filteredFiles, apiKey, owner, repo, headSha });
+      const analysis = await analyzePR({
+        files: filteredFiles,
+        apiKey,
+        owner,
+        repo,
+        commitShas,
+      });
 
       // If no analysis was performed (e.g., no text files), skip posting comments
       if (!analysis) {
@@ -121,7 +135,7 @@ async function run(): Promise<void> {
           owner,
           repo,
           issue_number: prNumber!,
-          body: `## Saltman Code Review\n\nNo issues detected! 🎉\n\n${getSaltmanFooter({ owner, repo, commitSha: headSha })}`,
+          body: `## Saltman Code Review\n\nNo issues detected! 🎉\n\n${getSaltmanFooter({ owner, repo, commitShas })}`,
         });
       }
 
@@ -168,7 +182,7 @@ async function run(): Promise<void> {
       const headSha = contextValues.commitSha;
       const baseSha = context.payload.before;
 
-      const files = await getPushFiles({
+      const { files, commitShas } = await getPushFiles({
         octokit,
         owner,
         repo,
@@ -179,7 +193,13 @@ async function run(): Promise<void> {
       // Filter out files that match ignore patterns
       const filteredFiles = filterIgnoredFiles({ files, ignorePatterns });
 
-      const analysis = await analyzePR({ files: filteredFiles, apiKey, owner, repo, headSha });
+      const analysis = await analyzePR({
+        files: filteredFiles,
+        apiKey,
+        owner,
+        repo,
+        commitShas: commitShas.length > 0 ? commitShas : [headSha],
+      });
 
       // If no analysis was performed (e.g., no text files), skip creating issue
       if (!analysis) {
@@ -195,7 +215,7 @@ async function run(): Promise<void> {
             issue,
             owner,
             repo,
-            headSha,
+            commitShas: commitShas.length > 0 ? commitShas : [headSha],
           });
 
           // Create a descriptive title for each issue

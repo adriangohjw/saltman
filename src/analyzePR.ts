@@ -11,7 +11,7 @@ import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
 interface AnalyzePRWithContextProps extends AnalyzePRProps {
   owner: string;
   repo: string;
-  headSha: string;
+  commitShas: string[];
 }
 
 export interface AnalysisResult {
@@ -25,7 +25,7 @@ export const analyzePR = async ({
   apiKey,
   owner,
   repo,
-  headSha,
+  commitShas,
 }: AnalyzePRWithContextProps): Promise<AnalysisResult | null> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
@@ -89,7 +89,12 @@ export const analyzePR = async ({
     const { criticalHigh, mediumLowInfo } = separateIssuesBySeverity(parsedReview.issues);
 
     // Generate inline comments for critical/high issues
-    const inlineComments = generateInlineComments({ issues: criticalHigh, owner, repo, headSha });
+    const inlineComments = generateInlineComments({
+      issues: criticalHigh,
+      owner,
+      repo,
+      commitShas,
+    });
 
     // Generate aggregated comment for medium/low/info issues
     const aggregatedComment =
@@ -98,7 +103,7 @@ export const analyzePR = async ({
             issues: mediumLowInfo,
             owner,
             repo,
-            headSha,
+            commitShas,
             hasCriticalHighIssues: criticalHigh.length > 0,
           })
         : null;
