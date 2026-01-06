@@ -2,11 +2,12 @@ import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import Anthropic from "@anthropic-ai/sdk";
 import * as core from "@actions/core";
+import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { separateIssuesBySeverity } from "./responses/format";
 import { generateInlineComments, type InlineComment } from "./responses/inline";
 import { formatAggregatedComment } from "./responses/aggregated";
 import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
-import { ReviewResponseSchema, getReviewSchema } from "./types";
+import { ReviewResponseSchema } from "./types";
 import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
 import type { GithubInputs } from "./validations/githubInputs";
 import { estimateMaxTokens } from "./utils/estimateMaxTokens";
@@ -61,16 +62,10 @@ const callClaude = async (apiKey: string, diff: string): Promise<ParsedReview> =
     apiKey: apiKey,
   });
 
-  const schema = getReviewSchema();
-  // Ensure the schema has the required type property for Anthropic
-  const anthropicSchema = {
-    type: "object" as const,
-    ...schema,
-  };
-
-  const response = await anthropic.messages.create({
+  const response = await anthropic.beta.messages.create({
     model: "claude-sonnet-4-5",
     max_tokens: estimateMaxTokens({ diff, defaultMax: 4096 }),
+    betas: ["structured-outputs-2025-11-13"],
     system: getSystemMessage(),
     messages: [
       {
@@ -78,31 +73,20 @@ const callClaude = async (apiKey: string, diff: string): Promise<ParsedReview> =
         content: buildAnalysisPrompt(diff),
       },
     ],
-    tools: [
-      {
-        name: "code_review_response",
-        description: "The code review response containing all issues found",
-        input_schema: anthropicSchema,
-      },
-    ],
-    tool_choice: {
-      type: "tool",
-      name: "code_review_response",
-    },
+    output_format: betaZodOutputFormat(ReviewResponseSchema),
   });
 
-  // Extract the tool use content
-  const toolUse = response.content.find(
-    (content): content is Anthropic.Messages.ToolUseBlock => content.type === "tool_use",
-  );
-
-  if (!toolUse || toolUse.name !== "code_review_response") {
+  // Parse the JSON response from the text content
+  const responseText = response.content[0]?.type === "text" ? response.content[0].text : null;
+  if (!responseText) {
     throw new Error(
       "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
     );
   }
 
-  return ReviewResponseSchema.parse(toolUse.input);
+  // Parse and validate the JSON response using the Zod schema
+  const parsed = JSON.parse(responseText);
+  return ReviewResponseSchema.parse(parsed);
 };
 
 export const analyzePR = async ({
