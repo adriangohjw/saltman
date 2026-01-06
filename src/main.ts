@@ -18,8 +18,8 @@ async function run(): Promise<void> {
   try {
     // Get inputs
     const inputToken = core.getInput("github-token", { required: true });
-    const inputOpenaiApiKey = core.getInput("openai-api-key");
-    const inputAnthropicApiKey = core.getInput("anthropic-api-key");
+    const inputProvider = core.getInput("provider", { required: true });
+    const inputApiKey = core.getInput("api-key", { required: true });
     const inputPostCommentWhenNoIssues = core.getInput("post-comment-when-no-issues");
     const inputIgnorePatterns = core.getInput("ignore-patterns");
     const inputTargetBranch = core.getInput("target-branch");
@@ -27,8 +27,8 @@ async function run(): Promise<void> {
     const { token, provider, apiKey, postCommentWhenNoIssues, ignorePatterns, targetBranch } =
       validateGithubInputs({
         token: inputToken,
-        openaiApiKey: inputOpenaiApiKey,
-        anthropicApiKey: inputAnthropicApiKey,
+        provider: inputProvider,
+        apiKey: inputApiKey,
         postCommentWhenNoIssues: inputPostCommentWhenNoIssues,
         ignorePatterns: inputIgnorePatterns,
         targetBranch: inputTargetBranch,

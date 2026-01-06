@@ -57,7 +57,7 @@ const callOpenAI = async (apiKey: string, diff: string): Promise<ParsedReview> =
   return response.output_parsed as ParsedReview;
 };
 
-const callClaude = async (apiKey: string, diff: string): Promise<ParsedReview> => {
+const callAnthropic = async (apiKey: string, diff: string): Promise<ParsedReview> => {
   const anthropic = new Anthropic({
     apiKey: apiKey,
   });
@@ -116,8 +116,8 @@ export const analyzePR = async ({
     core.info(`Using LLM provider: ${provider}`);
     let parsedReview;
     switch (provider) {
-      case "claude":
-        parsedReview = await callClaude(apiKey, diff);
+      case "anthropic":
+        parsedReview = await callAnthropic(apiKey, diff);
         break;
       case "openai":
         parsedReview = await callOpenAI(apiKey, diff);

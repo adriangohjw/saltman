@@ -7,12 +7,12 @@ inputs:
   github-token:
     description: 'GitHub token for API access'
     required: true
-  openai-api-key:
-    description: 'OpenAI API key for LLM code review (recommended). If both openai-api-key and anthropic-api-key are provided, OpenAI will be used.'
-    required: false
-  anthropic-api-key:
-    description: 'Anthropic API key for LLM code review. Note: OpenAI is recommended over Claude. If both openai-api-key and anthropic-api-key are provided, OpenAI will be used.'
-    required: false
+  provider:
+    description: 'LLM provider to use for code review. Must be either "openai" or "anthropic". OpenAI is recommended.'
+    required: true
+  api-key:
+    description: 'API key for the specified LLM provider.'
+    required: true
   post-comment-when-no-issues:
     description: 'Whether to post the analysis as a comment on the PR when no issues are detected (true/false). Defaults to false if not specified.'
     required: false
@@ -38,8 +38,8 @@ runs:
       run: bun dist/main.js
       env:
         INPUT_GITHUB-TOKEN: ${{ inputs.github-token }}
-        INPUT_OPENAI-API-KEY: ${{ inputs.openai-api-key }}
-        INPUT_ANTHROPIC-API-KEY: ${{ inputs.anthropic-api-key }}
+        INPUT_PROVIDER: ${{ inputs.provider }}
+        INPUT_API-KEY: ${{ inputs.api-key }}
         INPUT_POST-COMMENT-WHEN-NO-ISSUES: ${{ inputs.post-comment-when-no-issues }}
         INPUT_IGNORE-PATTERNS: ${{ inputs.ignore-patterns }}
         INPUT_TARGET-BRANCH: ${{ inputs.target-branch }}

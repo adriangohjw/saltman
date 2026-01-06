@@ -4,14 +4,13 @@ import { z } from "zod";
 const GithubInputsSchema = z
   .object({
     token: z.string().min(1, "No GitHub token provided"),
-    openaiApiKey: z
+    provider: z
       .string()
-      .optional()
-      .transform((val) => (val === undefined || val === "" ? undefined : val)),
-    anthropicApiKey: z
-      .string()
-      .optional()
-      .transform((val) => (val === undefined || val === "" ? undefined : val)),
+      .refine((val) => val === "openai" || val === "anthropic", {
+        message: 'provider must be either "openai" or "anthropic"',
+      })
+      .transform((val) => val as "openai" | "anthropic"),
+    apiKey: z.string().min(1, "API key must be provided"),
     postCommentWhenNoIssues: z
       .string()
       .optional()
@@ -43,25 +42,6 @@ const GithubInputsSchema = z
       }),
   })
   .superRefine((data, ctx) => {
-    // Validate that at least one API key is provided
-    const hasOpenaiKey = data.openaiApiKey !== undefined && data.openaiApiKey.length > 0;
-    const hasAnthropicKey = data.anthropicApiKey !== undefined && data.anthropicApiKey.length > 0;
-
-    if (!hasOpenaiKey && !hasAnthropicKey) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Either openai-api-key or anthropic-api-key must be provided",
-        path: ["openaiApiKey"],
-      });
-      ctx.addIssue({
-        code: "custom",
-        message: "Either openai-api-key or anthropic-api-key must be provided",
-        path: ["anthropicApiKey"],
-      });
-    }
-    // Note: If both keys are provided, OpenAI will be used (handled in validateGithubInputs)
-  })
-  .superRefine((data, ctx) => {
     // target-branch and post-comment-when-no-issues are mutually exclusive
     const hasTargetBranch = data.targetBranch !== undefined;
     const hasPostCommentWhenNoIssues = data.postCommentWhenNoIssues !== undefined;
@@ -82,43 +62,17 @@ const GithubInputsSchema = z
     }
   });
 
-const GithubInputsBaseSchema = GithubInputsSchema;
-
-export type GithubInputsBase = z.infer<typeof GithubInputsBaseSchema>;
-
-export type GithubInputs = GithubInputsBase & {
-  provider: "openai" | "claude";
-  apiKey: string;
-};
+export type GithubInputs = z.infer<typeof GithubInputsSchema>;
 
 export const validateGithubInputs = (inputs: unknown): GithubInputs => {
-  const base = GithubInputsBaseSchema.parse(inputs);
+  const result = GithubInputsSchema.parse(inputs);
 
-  // Infer provider from which API key is provided
-  // If both keys are provided, OpenAI is preferred (recommended provider)
-  const hasOpenaiKey = base.openaiApiKey !== undefined && base.openaiApiKey.length > 0;
-  const hasAnthropicKey = base.anthropicApiKey !== undefined && base.anthropicApiKey.length > 0;
-
-  if (hasOpenaiKey) {
-    if (hasAnthropicKey) {
-      // Log a warning that both keys were provided and OpenAI is being used
-      core.warning(
-        "Both openai-api-key and anthropic-api-key were provided. Using OpenAI (recommended provider).",
-      );
-    }
-    return {
-      ...base,
-      provider: "openai",
-      apiKey: base.openaiApiKey!,
-    };
-  } else if (hasAnthropicKey) {
-    return {
-      ...base,
-      provider: "claude",
-      apiKey: base.anthropicApiKey!,
-    };
-  } else {
-    // This should never happen due to validation, but TypeScript needs this
-    throw new Error("Either openai-api-key or anthropic-api-key must be provided");
+  // Encourage users to use OpenAI if they're using Anthropic
+  if (result.provider === "anthropic") {
+    core.warning(
+      "Anthropic provider is being used. OpenAI is recommended for better performance and reliability. Consider switching to provider: 'openai'.",
+    );
   }
+
+  return result;
 };
