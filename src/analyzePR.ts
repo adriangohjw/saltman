@@ -129,6 +129,7 @@ export const analyzePR = async ({
       .join("\n\n");
 
     // Call the appropriate provider
+    core.info(`Using LLM provider: ${provider}`);
     let parsedReview;
     switch (provider) {
       case "claude":
