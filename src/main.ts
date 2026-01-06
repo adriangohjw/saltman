@@ -25,6 +25,7 @@ async function run(): Promise<void> {
     const inputPostCommentWhenNoIssues = core.getInput("post-comment-when-no-issues");
     const inputIgnorePatterns = core.getInput("ignore-patterns");
     const inputTargetBranch = core.getInput("target-branch");
+    const inputPingUsers = core.getInput("ping-users");
 
     const {
       token,
@@ -35,6 +36,7 @@ async function run(): Promise<void> {
       postCommentWhenNoIssues,
       ignorePatterns,
       targetBranch,
+      pingUsers,
     } = validateGithubInputs({
       token: inputToken,
       provider: inputProvider,
@@ -44,6 +46,7 @@ async function run(): Promise<void> {
       postCommentWhenNoIssues: inputPostCommentWhenNoIssues,
       ignorePatterns: inputIgnorePatterns,
       targetBranch: inputTargetBranch,
+      pingUsers: inputPingUsers,
     });
 
     // Initialize GitHub client
@@ -190,6 +193,7 @@ async function run(): Promise<void> {
       // Push mode - create GitHub issue
       const headSha = contextValues.commitSha;
       const baseSha = context.payload.before;
+      const pusherUsername = contextValues.username;
 
       const files = await getPushFiles({
         octokit,
@@ -228,6 +232,7 @@ async function run(): Promise<void> {
             owner,
             repo,
             headSha,
+            pingUsers: [pusherUsername, ...(pingUsers ?? [])],
           });
 
           // Create a descriptive title for each issue

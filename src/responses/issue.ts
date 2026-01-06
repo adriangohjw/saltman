@@ -9,18 +9,22 @@ import {
   formatSolution,
 } from "./format";
 
+interface FormatSingleIssueForIssueProps {
+  issue: ParsedReview["issues"][0];
+  owner: string;
+  repo: string;
+  headSha: string;
+  pingUsers?: string[];
+}
+
 // Format a single issue for a GitHub issue body (used for push events)
 export const formatSingleIssueForIssue = ({
   issue,
   owner,
   repo,
   headSha,
-}: {
-  issue: ParsedReview["issues"][0];
-  owner: string;
-  repo: string;
-  headSha: string;
-}): string => {
+  pingUsers,
+}: FormatSingleIssueForIssueProps): string => {
   // Add Saltman label to the title, which can be used for dedeuplication of issues
   let output = `## ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
@@ -49,7 +53,12 @@ export const formatSingleIssueForIssue = ({
 
   output += formatSolution({ suggestion: issue.suggestion, codeSnippet: issue.codeSnippet });
 
-  output += getSaltmanFooter({ owner, repo, commitSha: headSha });
+  output += getSaltmanFooter({
+    owner,
+    repo,
+    commitSha: headSha,
+    pingUsers,
+  });
 
   return output;
 };
