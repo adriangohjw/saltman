@@ -9,7 +9,7 @@ A reusable GitHub Action that analyzes code changes and posts security and quali
   - Posts aggregated comments for medium/low/info issues
 - **Push Mode**: Triggers on direct pushes to a specific branch
   - Creates GitHub issues with all findings when security issues are detected
-- **AI-powered code review** using OpenAI (recommended) or Anthropic Claude Opus (explicit provider selection)
+- **AI-powered code review** using OpenAI (recommended), Anthropic Claude Opus, or any OpenAI-compatible API provider
 - **File ignore patterns** - Exclude files from analysis using glob patterns (similar to `.eslintignore` or `.gitignore`)
 - Written in TypeScript
 
@@ -48,7 +48,7 @@ jobs:
         uses: adriangohjw/saltman@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          provider: openai  # Must be either "openai" or "anthropic". OpenAI is recommended.
+          provider: openai  # Must be either "openai", "anthropic", or "openai-compatible". OpenAI is recommended.
           api-key: ${{ secrets.OPENAI_API_KEY }}  # API key for the specified provider
           post-comment-when-no-issues: true  # Optional: set to true to post analysis as PR comment when no issues are detected (defaults to false)
           ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
@@ -83,7 +83,7 @@ jobs:
         uses: adriangohjw/saltman@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          provider: openai  # Must be either "openai" or "anthropic". OpenAI is recommended.
+          provider: openai  # Must be either "openai", "anthropic", or "openai-compatible". OpenAI is recommended.
           api-key: ${{ secrets.OPENAI_API_KEY }}  # API key for the specified provider
           target-branch: main  # Required for push mode: branch to monitor
           ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
@@ -94,11 +94,47 @@ jobs:
 
 **Note:** Replace `adriangohjw/saltman@main` with your own repository path. Using `@main` will always use the latest commit on the main branch.
 
+### OpenAI-Compatible Provider
+
+You can use any OpenAI-compatible API provider (e.g., local models, self-hosted solutions, or other cloud providers):
+
+```yaml
+name: 'Analyze PR with OpenAI-Compatible Provider'
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Saltman
+        uses: adriangohjw/saltman@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          provider: openai-compatible  # Use OpenAI-compatible provider
+          api-key: ${{ secrets.OPENAI_COMPATIBLE_API_KEY }}  # API key for your provider
+          base-url: https://api.example.com/v1  # Base URL for your OpenAI-compatible API
+          model: gpt-4  # Model name to use (e.g., "gpt-4", "gpt-3.5-turbo", or your custom model name)
+```
+
+**Note:** When using `provider: openai-compatible`, both `base-url` and `model` are required.
+
 ### Inputs
 
 - `github-token` (required): GitHub token for API access. Use `${{ secrets.GITHUB_TOKEN }}` for automatic token.
-- `provider` (required): LLM provider to use for code review. Must be either `"openai"` or `"anthropic"`. **OpenAI is recommended** for better performance and reliability.
-- `api-key` (required): API key for the specified LLM provider. Store this as a secret in your repository settings (e.g., `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`).
+- `provider` (required): LLM provider to use for code review. Must be either `"openai"`, `"anthropic"`, or `"openai-compatible"`. **OpenAI is recommended** for better performance and reliability.
+- `api-key` (required): API key for the specified LLM provider. Store this as a secret in your repository settings (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or your custom provider's API key).
+- `base-url` (required when `provider` is `"openai-compatible"`): Base URL for your OpenAI-compatible API endpoint. For example: `https://api.example.com/v1` or `http://localhost:1234/v1`.
+- `model` (required when `provider` is `"openai-compatible"`): Model name to use with your OpenAI-compatible provider. This should match the model identifier your API expects (e.g., `"gpt-4"`, `"gpt-3.5-turbo"`, or your custom model name).
 - `post-comment-when-no-issues` (optional, PR mode only): Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false` if not provided (no comment will be posted). **Mutually exclusive with `target-branch`**.
 - `target-branch` (optional, Push mode only): Branch name to monitor for direct pushes. When set and action is triggered on a push event, creates a GitHub issue instead of PR comments. The action will only run when someone pushes directly to this branch. **Mutually exclusive with `post-comment-when-no-issues`**.
 - `ignore-patterns` (optional): Newline-separated list of glob patterns to exclude files from analysis. Similar to `.eslintignore` or `.gitignore` patterns. Files matching any pattern will be skipped during analysis. Examples:
