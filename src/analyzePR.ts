@@ -63,7 +63,7 @@ const callClaude = async (apiKey: string, diff: string): Promise<ParsedReview> =
   });
 
   const response = await anthropic.beta.messages.create({
-    model: "claude-sonnet-4-5",
+    model: "claude-opus-4-5",
     max_tokens: estimateMaxTokens({ diff, defaultMax: 4096 }),
     betas: ["structured-outputs-2025-11-13"],
     system: getSystemMessage(),
