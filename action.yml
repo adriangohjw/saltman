@@ -8,11 +8,17 @@ inputs:
     description: 'GitHub token for API access'
     required: true
   provider:
-    description: 'LLM provider to use for code review. Must be either "openai" or "anthropic". OpenAI is recommended.'
+    description: 'LLM provider to use for code review. Must be either "openai", "anthropic", or "openai-compatible". OpenAI is recommended.'
     required: true
   api-key:
     description: 'API key for the specified LLM provider.'
     required: true
+  base-url:
+    description: 'Base URL for OpenAI-compatible API. Required when provider is "openai-compatible".'
+    required: false
+  model:
+    description: 'Model name for OpenAI-compatible API. Required when provider is "openai-compatible".'
+    required: false
   post-comment-when-no-issues:
     description: 'Whether to post the analysis as a comment on the PR when no issues are detected (true/false). Defaults to false if not specified.'
     required: false
@@ -40,6 +46,8 @@ runs:
         INPUT_GITHUB-TOKEN: ${{ inputs.github-token }}
         INPUT_PROVIDER: ${{ inputs.provider }}
         INPUT_API-KEY: ${{ inputs.api-key }}
+        INPUT_BASE-URL: ${{ inputs.base-url }}
+        INPUT_MODEL: ${{ inputs.model }}
         INPUT_POST-COMMENT-WHEN-NO-ISSUES: ${{ inputs.post-comment-when-no-issues }}
         INPUT_IGNORE-PATTERNS: ${{ inputs.ignore-patterns }}
         INPUT_TARGET-BRANCH: ${{ inputs.target-branch }}

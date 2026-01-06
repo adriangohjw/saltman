@@ -6,11 +6,25 @@ const GithubInputsSchema = z
     token: z.string().min(1, "No GitHub token provided"),
     provider: z
       .string()
-      .refine((val) => val === "openai" || val === "anthropic", {
-        message: 'provider must be either "openai" or "anthropic"',
+      .refine((val) => val === "openai" || val === "anthropic" || val === "openai-compatible", {
+        message: 'provider must be either "openai", "anthropic", or "openai-compatible"',
       })
-      .transform((val) => val as "openai" | "anthropic"),
+      .transform((val) => val as "openai" | "anthropic" | "openai-compatible"),
     apiKey: z.string().min(1, "API key must be provided"),
+    baseUrl: z
+      .string()
+      .optional()
+      .transform((val) => {
+        if (val === undefined || val === "") return undefined;
+        return val.trim();
+      }),
+    model: z
+      .string()
+      .optional()
+      .transform((val) => {
+        if (val === undefined || val === "") return undefined;
+        return val.trim();
+      }),
     postCommentWhenNoIssues: z
       .string()
       .optional()
@@ -59,6 +73,24 @@ const GithubInputsSchema = z
           "target-branch and post-comment-when-no-issues are mutually exclusive. Use target-branch for push events (creates issues) and post-comment-when-no-issues for PR events (creates comments).",
         path: ["postCommentWhenNoIssues"],
       });
+    }
+
+    // base-url and model are required when provider is openai-compatible
+    if (data.provider === "openai-compatible") {
+      if (!data.baseUrl) {
+        ctx.addIssue({
+          code: "custom",
+          message: 'base-url is required when provider is "openai-compatible"',
+          path: ["baseUrl"],
+        });
+      }
+      if (!data.model) {
+        ctx.addIssue({
+          code: "custom",
+          message: 'model is required when provider is "openai-compatible"',
+          path: ["model"],
+        });
+      }
     }
   });
 
