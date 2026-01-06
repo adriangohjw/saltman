@@ -46,9 +46,6 @@ async function run(): Promise<void> {
     const owner = context.repo.owner;
     const repo = context.repo.repo;
 
-    // Determine if we're in push mode (push event with target branch specified)
-    const isPushMode = !isPullRequest && context.eventName === "push" && targetBranch;
-
     if (isPullRequest) {
       // PR mode - existing behavior
       const prNumber = (contextValues as PRContextValues).prNumber;
@@ -127,7 +124,13 @@ async function run(): Promise<void> {
           body: `## Saltman Code Review\n\nNo issues detected! 🎉\n\n${getSaltmanFooter({ owner, repo, commitSha: headSha })}`,
         });
       }
-    } else if (isPushMode) {
+
+      return;
+    }
+
+    // Determine if we're in push mode (push event with target branch specified)
+    const isPushMode = !isPullRequest && context.eventName === "push" && targetBranch;
+    if (isPushMode) {
       const currentBranch = context.ref.replace("refs/heads/", "");
       if (currentBranch !== targetBranch) {
         // Push event but not on target branch, skip
@@ -186,11 +189,11 @@ async function run(): Promise<void> {
           });
         }
       }
-    } else {
-      throw new Error(
-        "This action must be run on a pull request event or a push event with target-branch specified",
-      );
     }
+
+    throw new Error(
+      "This action must be run on a pull request event or a push event with target-branch specified",
+    );
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
