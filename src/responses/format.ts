@@ -5,7 +5,7 @@ interface FormatReviewResponseProps {
   review: ParsedReview;
   owner: string;
   repo: string;
-  headSha: string;
+  commitShas: string[];
 }
 
 // Shared utility functions for formatting
@@ -228,7 +228,7 @@ export const formatReviewResponse = ({
   review,
   owner,
   repo,
-  headSha,
+  commitShas,
 }: FormatReviewResponseProps): string | null => {
   // Return null if there are no issues
   if (!review.issues || review.issues.length === 0) {
@@ -242,7 +242,7 @@ export const formatReviewResponse = ({
     issues: review.issues,
     owner,
     repo,
-    headSha,
+    commitShas,
     hasCriticalHighIssues: false,
   });
 };
