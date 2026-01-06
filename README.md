@@ -9,7 +9,7 @@ A reusable GitHub Action that analyzes code changes and posts security and quali
   - Posts aggregated comments for medium/low/info issues
 - **Push Mode**: Triggers on direct pushes to a specific branch
   - Creates GitHub issues with all findings when security issues are detected
-- **AI-powered code review** using OpenAI's LLM
+- **AI-powered code review** using OpenAI or Anthropic Claude Opus (provider is automatically inferred from which API key you provide)
 - **File ignore patterns** - Exclude files from analysis using glob patterns (similar to `.eslintignore` or `.gitignore`)
 - Written in TypeScript
 
@@ -48,7 +48,9 @@ jobs:
         uses: adriangohjw/saltman@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          # Provide either openai-api-key OR anthropic-api-key (not both)
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}  # For OpenAI
+          # anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}  # For Claude Opus
           post-comment-when-no-issues: true  # Optional: set to true to post analysis as PR comment when no issues are detected (defaults to false)
           ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
             **/*.test.ts
@@ -82,7 +84,9 @@ jobs:
         uses: adriangohjw/saltman@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          # Provide either openai-api-key OR anthropic-api-key (not both)
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}  # For OpenAI
+          # anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}  # For Claude Opus
           target-branch: main  # Required for push mode: branch to monitor
           ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
             **/*.md
@@ -95,7 +99,8 @@ jobs:
 ### Inputs
 
 - `github-token` (required): GitHub token for API access. Use `${{ secrets.GITHUB_TOKEN }}` for automatic token.
-- `openai-api-key` (required): OpenAI API key for LLM-powered code review. Store this as a secret in your repository settings (e.g., `OPENAI_API_KEY`).
+- `openai-api-key` (required if using OpenAI): OpenAI API key for LLM-powered code review. Store this as a secret in your repository settings (e.g., `OPENAI_API_KEY`). **Provide either this or `anthropic-api-key` (not both)**.
+- `anthropic-api-key` (required if using Claude): Anthropic API key for Claude Opus code review. Store this as a secret in your repository settings (e.g., `ANTHROPIC_API_KEY`). **Provide either this or `openai-api-key` (not both)**. The provider is automatically inferred from which API key you provide.
 - `post-comment-when-no-issues` (optional, PR mode only): Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false` if not provided (no comment will be posted). **Mutually exclusive with `target-branch`**.
 - `target-branch` (optional, Push mode only): Branch name to monitor for direct pushes. When set and action is triggered on a push event, creates a GitHub issue instead of PR comments. The action will only run when someone pushes directly to this branch. **Mutually exclusive with `post-comment-when-no-issues`**.
 - `ignore-patterns` (optional): Newline-separated list of glob patterns to exclude files from analysis. Similar to `.eslintignore` or `.gitignore` patterns. Files matching any pattern will be skipped during analysis. Examples:
