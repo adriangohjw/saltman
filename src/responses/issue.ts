@@ -22,7 +22,7 @@ export const formatSingleIssueForIssue = ({
   headSha: string;
 }): string => {
   // Add Saltman label to the title, which can be used for dedeuplication of issues
-  let output = `## [SALTMAN] ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
+  let output = `## ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
   // Build metadata line
   output += `${buildMetadataLine(issue)}\n\n`;
