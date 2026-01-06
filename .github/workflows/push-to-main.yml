@@ -1,0 +1,27 @@
+name: Security Review on Push to Main
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  security-review:
+    name: "🔒 Security Review"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Saltman Action
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          target-branch: main
+          ignore-patterns: |
+            **/*.md
+            package.json
+            bun.lockb
