@@ -65,7 +65,7 @@ export const formatAggregatedComment = ({
     output += formatSolution({ suggestion: issue.suggestion, codeSnippet: issue.codeSnippet });
   });
 
-  output += getSaltmanFooter({ owner, repo });
+  output += getSaltmanFooter({ owner, repo, commitSha: headSha });
 
   return output;
 };

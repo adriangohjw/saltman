@@ -60,14 +60,6 @@ async function run(): Promise<void> {
       });
       const headSha = prResponse.data.head.sha;
 
-      // Get all commits in the PR
-      const commitsResponse = await octokit.rest.pulls.listCommits({
-        owner,
-        repo,
-        pull_number: prNumber!,
-      });
-      const commitShas = commitsResponse.data.map((commit) => commit.sha);
-
       const files = await getPullRequestFiles({ octokit, owner, repo, prNumber: prNumber! });
 
       // Filter out files that match ignore patterns
@@ -78,7 +70,7 @@ async function run(): Promise<void> {
         apiKey,
         owner,
         repo,
-        commitShas,
+        commitSha: headSha,
       });
 
       // If no analysis was performed (e.g., no text files), skip posting comments
@@ -135,7 +127,7 @@ async function run(): Promise<void> {
           owner,
           repo,
           issue_number: prNumber!,
-          body: `## Saltman Code Review\n\nNo issues detected! 🎉\n\n${getSaltmanFooter({ owner, repo, commitShas })}`,
+          body: `## Saltman Code Review\n\nNo issues detected! 🎉\n\n${getSaltmanFooter({ owner, repo, commitSha: headSha })}`,
         });
       }
 
@@ -182,7 +174,7 @@ async function run(): Promise<void> {
       const headSha = contextValues.commitSha;
       const baseSha = context.payload.before;
 
-      const { files, commitShas } = await getPushFiles({
+      const files = await getPushFiles({
         octokit,
         owner,
         repo,
@@ -198,7 +190,7 @@ async function run(): Promise<void> {
         apiKey,
         owner,
         repo,
-        commitShas: commitShas.length > 0 ? commitShas : [headSha],
+        commitSha: headSha,
       });
 
       // If no analysis was performed (e.g., no text files), skip creating issue
@@ -215,7 +207,7 @@ async function run(): Promise<void> {
             issue,
             owner,
             repo,
-            commitShas: commitShas.length > 0 ? commitShas : [headSha],
+            commitSha: headSha,
           });
 
           // Create a descriptive title for each issue

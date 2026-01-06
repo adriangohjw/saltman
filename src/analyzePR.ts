@@ -7,12 +7,11 @@ import { formatAggregatedComment } from "./responses/aggregated";
 import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema } from "./types";
 import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
-import { getHeadSha } from "./utils/getHeadSha";
 
 interface AnalyzePRWithContextProps extends AnalyzePRProps {
   owner: string;
   repo: string;
-  commitShas: string[];
+  commitSha: string;
 }
 
 export interface AnalysisResult {
@@ -26,7 +25,7 @@ export const analyzePR = async ({
   apiKey,
   owner,
   repo,
-  commitShas,
+  commitSha,
 }: AnalyzePRWithContextProps): Promise<AnalysisResult | null> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
@@ -94,6 +93,7 @@ export const analyzePR = async ({
       issues: criticalHigh,
       owner,
       repo,
+      headSha: commitSha,
     });
 
     // Generate aggregated comment for medium/low/info issues
@@ -103,7 +103,7 @@ export const analyzePR = async ({
             issues: mediumLowInfo,
             owner,
             repo,
-            headSha: getHeadSha(commitShas),
+            headSha: commitSha,
             hasCriticalHighIssues: criticalHigh.length > 0,
           })
         : null;

@@ -4,10 +4,10 @@ const SHORT_SHA_LENGTH = 7;
 interface GetSaltmanFooterProps {
   owner: string;
   repo: string;
-  commitShas?: string[];
+  commitSha?: string;
 }
 
-export const getSaltmanFooter = ({ owner, repo, commitShas }: GetSaltmanFooterProps): string => {
+export const getSaltmanFooter = ({ owner, repo, commitSha }: GetSaltmanFooterProps): string => {
   const saltmanLink = `[Saltman](${SALTMAN_REPO_URL})`;
   const footerBase = `<sub>
 
@@ -15,17 +15,11 @@ export const getSaltmanFooter = ({ owner, repo, commitShas }: GetSaltmanFooterPr
 
 Written by ${saltmanLink}`;
 
-  if (!commitShas || commitShas.length === 0) {
+  if (!commitSha) {
     return `${footerBase}.</sub>`;
   }
 
-  const commitLinks = commitShas.map((sha) => {
-    const shortSha = sha.substring(0, SHORT_SHA_LENGTH);
-    const commitUrl = `https://github.com/${owner}/${repo}/commit/${sha}`;
-    return `[${shortSha}](${commitUrl})`;
-  });
-
-  const commitsText = commitLinks.join(", ");
-  const commitWord = commitShas.length === 1 ? "commit" : "commits";
-  return `${footerBase} for ${commitWord} ${commitsText}.</sub>`;
+  const shortSha = commitSha.substring(0, SHORT_SHA_LENGTH);
+  const commitUrl = `https://github.com/${owner}/${repo}/commit/${commitSha}`;
+  return `${footerBase} (valid until [${shortSha}](${commitUrl})).</sub>`;
 };

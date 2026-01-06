@@ -1,5 +1,4 @@
 import { getSaltmanFooter } from "./shared";
-import { getHeadSha } from "../utils/getHeadSha";
 import type { ParsedReview } from "../types";
 import {
   getSeverityEmoji,
@@ -10,20 +9,20 @@ import {
   formatSolution,
 } from "./format";
 
+interface FormatSingleIssueForIssueProps {
+  issue: ParsedReview["issues"][0];
+  owner: string;
+  repo: string;
+  commitSha: string;
+}
+
 // Format a single issue for a GitHub issue body (used for push events)
 export const formatSingleIssueForIssue = ({
   issue,
   owner,
   repo,
-  commitShas,
-}: {
-  issue: ParsedReview["issues"][0];
-  owner: string;
-  repo: string;
-  commitShas: string[];
-}): string => {
-  const headSha = getHeadSha(commitShas);
-
+  commitSha,
+}: FormatSingleIssueForIssueProps): string => {
   // Add Saltman label to the title, which can be used for dedeuplication of issues
   let output = `## ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
@@ -40,7 +39,7 @@ export const formatSingleIssueForIssue = ({
     const permalink = buildFilePermalink(
       owner,
       repo,
-      headSha,
+      commitSha,
       file,
       startLine ?? undefined,
       endLine ?? undefined,
@@ -55,7 +54,7 @@ export const formatSingleIssueForIssue = ({
   output += getSaltmanFooter({
     owner,
     repo,
-    commitShas,
+    commitSha,
   });
 
   return output;
