@@ -17,7 +17,7 @@ interface AnalyzePRWithContextProps extends AnalyzePRProps {
 export interface AnalysisResult {
   inlineComments: InlineComment[];
   aggregatedComment: string | null;
-  hasIssues: boolean;
+  allIssues: ParsedReview["issues"];
 }
 
 export const analyzePR = async ({
@@ -81,7 +81,7 @@ export const analyzePR = async ({
       return {
         inlineComments: [],
         aggregatedComment: null,
-        hasIssues: false,
+        allIssues: [],
       };
     }
 
@@ -106,7 +106,7 @@ export const analyzePR = async ({
     return {
       inlineComments,
       aggregatedComment,
-      hasIssues: true,
+      allIssues: parsedReview.issues,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";

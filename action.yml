@@ -16,6 +16,9 @@ inputs:
   ignore-patterns:
     description: 'Newline-separated list of glob patterns to ignore files from PR analysis (e.g., "**/*.test.ts\n**/node_modules/**\n*.md"). Similar to .eslintignore or .gitignore patterns.'
     required: false
+  target-branch:
+    description: 'Branch name to monitor for direct pushes. When set and action is triggered on push event, creates a GitHub issue instead of PR comments. Only used when triggered on push events.'
+    required: false
 runs:
   using: 'composite'
   steps:
@@ -35,4 +38,5 @@ runs:
         INPUT_OPENAI-API-KEY: ${{ inputs.openai-api-key }}
         INPUT_POST-COMMENT-WHEN-NO-ISSUES: ${{ inputs.post-comment-when-no-issues }}
         INPUT_IGNORE-PATTERNS: ${{ inputs.ignore-patterns }}
+        INPUT_TARGET-BRANCH: ${{ inputs.target-branch }}
 
