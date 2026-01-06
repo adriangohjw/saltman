@@ -135,7 +135,3 @@ export const ReviewResponseSchema = z.object({
 });
 
 export type ParsedReview = z.infer<typeof ReviewResponseSchema>;
-
-export const getReviewSchema = () => {
-  return z.toJSONSchema(ReviewResponseSchema) as Record<string, unknown>;
-};

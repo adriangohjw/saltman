@@ -1,17 +1,22 @@
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
+import Anthropic from "@anthropic-ai/sdk";
 import * as core from "@actions/core";
+import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { separateIssuesBySeverity } from "./responses/format";
 import { generateInlineComments, type InlineComment } from "./responses/inline";
 import { formatAggregatedComment } from "./responses/aggregated";
 import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema } from "./types";
 import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
+import type { GithubInputs } from "./validations/githubInputs";
+import { estimateMaxTokens } from "./utils/estimateMaxTokens";
 
 interface AnalyzePRWithContextProps extends AnalyzePRProps {
   owner: string;
   repo: string;
   headSha: string;
+  provider: GithubInputs["provider"];
 }
 
 export interface AnalysisResult {
@@ -20,12 +25,77 @@ export interface AnalysisResult {
   allIssues: ParsedReview["issues"];
 }
 
+const callOpenAI = async (apiKey: string, diff: string): Promise<ParsedReview> => {
+  const openai = new OpenAI({
+    apiKey: apiKey,
+  });
+
+  const response = await openai.responses.parse({
+    model: "gpt-5.1-codex-mini",
+    input: [
+      {
+        role: "system",
+        content: getSystemMessage(),
+      },
+      {
+        role: "user",
+        content: buildAnalysisPrompt(diff),
+      },
+    ],
+    text: {
+      format: zodTextFormat(ReviewResponseSchema, "code_review_response"),
+    },
+  });
+
+  // Check if output_parsed is null (can happen when model refuses or parsing fails)
+  if (response.output_parsed === null) {
+    throw new Error(
+      "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
+    );
+  }
+
+  return response.output_parsed as ParsedReview;
+};
+
+const callClaude = async (apiKey: string, diff: string): Promise<ParsedReview> => {
+  const anthropic = new Anthropic({
+    apiKey: apiKey,
+  });
+
+  const response = await anthropic.beta.messages.create({
+    model: "claude-opus-4-5",
+    max_tokens: estimateMaxTokens({ diff, defaultMax: 4096 }),
+    betas: ["structured-outputs-2025-11-13"],
+    system: getSystemMessage(),
+    messages: [
+      {
+        role: "user",
+        content: buildAnalysisPrompt(diff),
+      },
+    ],
+    output_format: betaZodOutputFormat(ReviewResponseSchema),
+  });
+
+  // Parse the JSON response from the text content
+  const responseText = response.content[0]?.type === "text" ? response.content[0].text : null;
+  if (!responseText) {
+    throw new Error(
+      "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
+    );
+  }
+
+  // Parse and validate the JSON response using the Zod schema
+  const parsed = JSON.parse(responseText);
+  return ReviewResponseSchema.parse(parsed);
+};
+
 export const analyzePR = async ({
   files,
   apiKey,
   owner,
   repo,
   headSha,
+  provider,
 }: AnalyzePRWithContextProps): Promise<AnalysisResult | null> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
@@ -36,41 +106,26 @@ export const analyzePR = async ({
   }
 
   try {
-    const openai = new OpenAI({
-      apiKey: apiKey,
-    });
-
     // Convert file changes to a single diff string
     // Include filename so LLM knows which file each diff belongs to
     const diff = filesWithPatches
       .map((file: FileChange) => `--- a/${file.filename}\n+++ b/${file.filename}\n${file.patch}`)
       .join("\n\n");
 
-    const response = await openai.responses.parse({
-      model: "gpt-5.1-codex-mini",
-      input: [
-        {
-          role: "system",
-          content: getSystemMessage(),
-        },
-        {
-          role: "user",
-          content: buildAnalysisPrompt(diff),
-        },
-      ],
-      text: {
-        format: zodTextFormat(ReviewResponseSchema, "code_review_response"),
-      },
-    });
-
-    // Check if output_parsed is null (can happen when model refuses or parsing fails)
-    if (response.output_parsed === null) {
-      throw new Error(
-        "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
-      );
+    // Call the appropriate provider
+    core.info(`Using LLM provider: ${provider}`);
+    let parsedReview;
+    switch (provider) {
+      case "claude":
+        parsedReview = await callClaude(apiKey, diff);
+        break;
+      case "openai":
+        parsedReview = await callOpenAI(apiKey, diff);
+        break;
+      default:
+        const _exhaustiveCheck: never = provider;
+        throw new Error(`Unsupported provider: ${_exhaustiveCheck}`);
     }
-
-    const parsedReview = response.output_parsed as ParsedReview;
 
     // Log AI response in nicely formatted JSON for debugging
     core.info("=== AI Response (Parsed) ===");
@@ -110,7 +165,7 @@ export const analyzePR = async ({
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error(`OpenAI API error: ${errorMessage}`);
+    console.error(`${provider} API error: ${errorMessage}`);
 
     // Re-throw the error so CI fails when there's an API error
     throw error;

@@ -8,8 +8,11 @@ inputs:
     description: 'GitHub token for API access'
     required: true
   openai-api-key:
-    description: 'OpenAI API key for LLM code review'
-    required: true
+    description: 'OpenAI API key for LLM code review (recommended). If both openai-api-key and anthropic-api-key are provided, OpenAI will be used.'
+    required: false
+  anthropic-api-key:
+    description: 'Anthropic API key for LLM code review. Note: OpenAI is recommended over Claude. If both openai-api-key and anthropic-api-key are provided, OpenAI will be used.'
+    required: false
   post-comment-when-no-issues:
     description: 'Whether to post the analysis as a comment on the PR when no issues are detected (true/false). Defaults to false if not specified.'
     required: false
@@ -36,6 +39,7 @@ runs:
       env:
         INPUT_GITHUB-TOKEN: ${{ inputs.github-token }}
         INPUT_OPENAI-API-KEY: ${{ inputs.openai-api-key }}
+        INPUT_ANTHROPIC-API-KEY: ${{ inputs.anthropic-api-key }}
         INPUT_POST-COMMENT-WHEN-NO-ISSUES: ${{ inputs.post-comment-when-no-issues }}
         INPUT_IGNORE-PATTERNS: ${{ inputs.ignore-patterns }}
         INPUT_TARGET-BRANCH: ${{ inputs.target-branch }}

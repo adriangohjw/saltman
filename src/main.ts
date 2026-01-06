@@ -18,15 +18,17 @@ async function run(): Promise<void> {
   try {
     // Get inputs
     const inputToken = core.getInput("github-token", { required: true });
-    const inputOpenaiApiKey = core.getInput("openai-api-key", { required: true });
+    const inputOpenaiApiKey = core.getInput("openai-api-key");
+    const inputAnthropicApiKey = core.getInput("anthropic-api-key");
     const inputPostCommentWhenNoIssues = core.getInput("post-comment-when-no-issues");
     const inputIgnorePatterns = core.getInput("ignore-patterns");
     const inputTargetBranch = core.getInput("target-branch");
 
-    const { token, apiKey, postCommentWhenNoIssues, ignorePatterns, targetBranch } =
+    const { token, provider, apiKey, postCommentWhenNoIssues, ignorePatterns, targetBranch } =
       validateGithubInputs({
         token: inputToken,
-        apiKey: inputOpenaiApiKey,
+        openaiApiKey: inputOpenaiApiKey,
+        anthropicApiKey: inputAnthropicApiKey,
         postCommentWhenNoIssues: inputPostCommentWhenNoIssues,
         ignorePatterns: inputIgnorePatterns,
         targetBranch: inputTargetBranch,
@@ -65,7 +67,14 @@ async function run(): Promise<void> {
       // Filter out files that match ignore patterns
       const filteredFiles = filterIgnoredFiles({ files, ignorePatterns });
 
-      const analysis = await analyzePR({ files: filteredFiles, apiKey, owner, repo, headSha });
+      const analysis = await analyzePR({
+        files: filteredFiles,
+        apiKey,
+        owner,
+        repo,
+        headSha,
+        provider,
+      });
 
       // If no analysis was performed (e.g., no text files), skip posting comments
       if (!analysis) {
@@ -179,7 +188,14 @@ async function run(): Promise<void> {
       // Filter out files that match ignore patterns
       const filteredFiles = filterIgnoredFiles({ files, ignorePatterns });
 
-      const analysis = await analyzePR({ files: filteredFiles, apiKey, owner, repo, headSha });
+      const analysis = await analyzePR({
+        files: filteredFiles,
+        apiKey,
+        owner,
+        repo,
+        headSha,
+        provider,
+      });
 
       // If no analysis was performed (e.g., no text files), skip creating issue
       if (!analysis) {
