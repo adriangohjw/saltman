@@ -54,6 +54,32 @@ const GithubInputsSchema = z
           .map((line) => line.trim())
           .filter((line) => line.length > 0);
       }),
+    pingUsers: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (val === undefined || val === "") return true;
+          const items = val
+            .split(/[\s\n]+/)
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+          // All items must start with "@"
+          return items.every((item) => item.startsWith("@"));
+        },
+        {
+          message:
+            'ping-users: All items must start with "@" (e.g., "@user1 @team/security"). Invalid items found.',
+        },
+      )
+      .transform((val) => {
+        if (val === undefined || val === "") return undefined;
+        // Split by newlines or spaces, filter out empty strings
+        return val
+          .split(/[\s\n]+/)
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0);
+      }),
   })
   .superRefine((data, ctx) => {
     // target-branch and post-comment-when-no-issues are mutually exclusive
