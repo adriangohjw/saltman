@@ -1,5 +1,4 @@
 import { getSaltmanFooter } from "./shared";
-import { getHeadSha } from "../utils/getHeadSha";
 import type { ParsedReview } from "../types";
 import {
   getSeverityEmoji,
@@ -15,7 +14,7 @@ interface FormatAggregatedCommentProps {
   issues: ParsedReview["issues"];
   owner: string;
   repo: string;
-  commitShas: string[];
+  headSha: string;
   hasCriticalHighIssues: boolean;
 }
 
@@ -24,14 +23,12 @@ export const formatAggregatedComment = ({
   issues,
   owner,
   repo,
-  commitShas,
+  headSha,
   hasCriticalHighIssues,
 }: FormatAggregatedCommentProps): string | null => {
   if (issues.length === 0) {
     return null;
   }
-
-  const headSha = getHeadSha(commitShas);
 
   let output = buildAggregatedHeader({ hasCriticalHighIssues });
 
@@ -68,7 +65,7 @@ export const formatAggregatedComment = ({
     output += formatSolution({ suggestion: issue.suggestion, codeSnippet: issue.codeSnippet });
   });
 
-  output += getSaltmanFooter({ owner, repo, commitShas });
+  output += getSaltmanFooter({ owner, repo });
 
   return output;
 };

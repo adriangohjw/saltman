@@ -1,12 +1,4 @@
 import type { ParsedReview, Severity, Exploitability, Impact, SecurityCategory } from "../types";
-import { formatAggregatedComment } from "./aggregated";
-
-interface FormatReviewResponseProps {
-  review: ParsedReview;
-  owner: string;
-  repo: string;
-  commitShas: string[];
-}
 
 // Shared utility functions for formatting
 export const getSeverityEmoji = (severity: Severity): string => {
@@ -221,28 +213,4 @@ export const formatSolution = ({ suggestion, codeSnippet }: FormatSolutionProps)
   }
   output += `</details>\n\n`;
   return output;
-};
-
-// Legacy function for backward compatibility (returns aggregated format)
-export const formatReviewResponse = ({
-  review,
-  owner,
-  repo,
-  commitShas,
-}: FormatReviewResponseProps): string | null => {
-  // Return null if there are no issues
-  if (!review.issues || review.issues.length === 0) {
-    return null;
-  }
-
-  // For backward compatibility, return all issues in aggregated format
-  // Since this is legacy and we don't know if there are critical/high issues,
-  // we default to false (no critical/high issues) for a generic header
-  return formatAggregatedComment({
-    issues: review.issues,
-    owner,
-    repo,
-    commitShas,
-    hasCriticalHighIssues: false,
-  });
 };

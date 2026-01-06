@@ -20,16 +20,10 @@ interface FormatInlineCommentProps {
   issue: ParsedReview["issues"][0];
   owner: string;
   repo: string;
-  commitShas: string[];
 }
 
 // Format a single issue for inline comment (concise and actionable)
-const formatInlineComment = ({
-  issue,
-  owner,
-  repo,
-  commitShas,
-}: FormatInlineCommentProps): string => {
+const formatInlineComment = ({ issue, owner, repo }: FormatInlineCommentProps): string => {
   let output = `### ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
   // Build metadata line
@@ -44,7 +38,7 @@ const formatInlineComment = ({
 
   output += formatSolution({ suggestion: issue.suggestion, codeSnippet: issue.codeSnippet });
 
-  output += getSaltmanFooter({ owner, repo, commitShas });
+  output += getSaltmanFooter({ owner, repo });
 
   return output;
 };
@@ -53,7 +47,6 @@ interface GenerateInlineCommentsProps {
   issues: ParsedReview["issues"];
   owner: string;
   repo: string;
-  commitShas: string[];
 }
 
 // Generate inline comments for critical/high issues
@@ -61,7 +54,6 @@ export const generateInlineComments = ({
   issues,
   owner,
   repo,
-  commitShas,
 }: GenerateInlineCommentsProps): InlineComment[] => {
   const inlineComments: InlineComment[] = [];
 
@@ -78,7 +70,7 @@ export const generateInlineComments = ({
         path: issue.location.file,
         startLine: issue.location.startLine,
         endLine,
-        body: formatInlineComment({ issue, owner, repo, commitShas }),
+        body: formatInlineComment({ issue, owner, repo }),
       });
     }
   });

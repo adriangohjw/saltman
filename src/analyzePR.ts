@@ -7,6 +7,7 @@ import { formatAggregatedComment } from "./responses/aggregated";
 import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema } from "./types";
 import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
+import { getHeadSha } from "./utils/getHeadSha";
 
 interface AnalyzePRWithContextProps extends AnalyzePRProps {
   owner: string;
@@ -93,7 +94,6 @@ export const analyzePR = async ({
       issues: criticalHigh,
       owner,
       repo,
-      commitShas,
     });
 
     // Generate aggregated comment for medium/low/info issues
@@ -103,7 +103,7 @@ export const analyzePR = async ({
             issues: mediumLowInfo,
             owner,
             repo,
-            commitShas,
+            headSha: getHeadSha(commitShas),
             hasCriticalHighIssues: criticalHigh.length > 0,
           })
         : null;

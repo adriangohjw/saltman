@@ -4,7 +4,7 @@ const SHORT_SHA_LENGTH = 7;
 interface GetSaltmanFooterProps {
   owner: string;
   repo: string;
-  commitShas: string[];
+  commitShas?: string[];
 }
 
 export const getSaltmanFooter = ({ owner, repo, commitShas }: GetSaltmanFooterProps): string => {
@@ -15,7 +15,7 @@ export const getSaltmanFooter = ({ owner, repo, commitShas }: GetSaltmanFooterPr
 
 Written by ${saltmanLink}`;
 
-  if (commitShas.length === 0) {
+  if (!commitShas || commitShas.length === 0) {
     return `${footerBase}.</sub>`;
   }
 
