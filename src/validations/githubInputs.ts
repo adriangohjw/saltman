@@ -1,3 +1,4 @@
+import * as core from "@actions/core";
 import { z } from "zod";
 
 const GithubInputsSchema = z
@@ -42,7 +43,7 @@ const GithubInputsSchema = z
       }),
   })
   .superRefine((data, ctx) => {
-    // Validate that exactly one API key is provided
+    // Validate that at least one API key is provided
     const hasOpenaiKey = data.openaiApiKey !== undefined && data.openaiApiKey.length > 0;
     const hasAnthropicKey = data.anthropicApiKey !== undefined && data.anthropicApiKey.length > 0;
 
@@ -57,20 +58,8 @@ const GithubInputsSchema = z
         message: "Either openai-api-key or anthropic-api-key must be provided",
         path: ["anthropicApiKey"],
       });
-    } else if (hasOpenaiKey && hasAnthropicKey) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          "Cannot provide both openai-api-key and anthropic-api-key. Please provide only one.",
-        path: ["openaiApiKey"],
-      });
-      ctx.addIssue({
-        code: "custom",
-        message:
-          "Cannot provide both openai-api-key and anthropic-api-key. Please provide only one.",
-        path: ["anthropicApiKey"],
-      });
     }
+    // Note: If both keys are provided, OpenAI will be used (handled in validateGithubInputs)
   })
   .superRefine((data, ctx) => {
     // target-branch and post-comment-when-no-issues are mutually exclusive
@@ -106,10 +95,17 @@ export const validateGithubInputs = (inputs: unknown): GithubInputs => {
   const base = GithubInputsBaseSchema.parse(inputs);
 
   // Infer provider from which API key is provided
+  // If both keys are provided, OpenAI is preferred (recommended provider)
   const hasOpenaiKey = base.openaiApiKey !== undefined && base.openaiApiKey.length > 0;
   const hasAnthropicKey = base.anthropicApiKey !== undefined && base.anthropicApiKey.length > 0;
 
   if (hasOpenaiKey) {
+    if (hasAnthropicKey) {
+      // Log a warning that both keys were provided and OpenAI is being used
+      core.warning(
+        "Both openai-api-key and anthropic-api-key were provided. Using OpenAI (recommended provider).",
+      );
+    }
     return {
       ...base,
       provider: "openai",
