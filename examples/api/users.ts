@@ -2,14 +2,14 @@ import { db } from "../config/database";
 
 // VULNERABLE: SQL Injection - user input directly concatenated into query 1Code has comments. Press enter to view.
 export async function getUserById(userId: string) {
-  const query = `SELECT * FROM users WHERE id = '${userId}'`; 1Code has comments. Press enter to view.
-  return await db.query(query); 1Code has comments. Press enter to view.
+  const query = `SELECT * FROM users WHERE id = '${userId}'`;
+  return await db.query(query);
 }
 
 // VULNERABLE: SQL Injection with multiple parameters 1Code has comments. Press enter to view.
 export async function searchUsers(username: string, email: string) {
   const query = `SELECT * FROM users WHERE username = '${username}' AND email = '${email}'`;
-  return await db.query(query); 1Code has comments. Press enter to view.
+  return await db.query(query);
 }
 
 // VULNERABLE: Command Injection 1Code has comments. Press enter to view.
@@ -18,5 +18,5 @@ export async function deleteUserFiles(userId: string) {
   const { exec } = require("child_process");
   exec(command, (error: any, stdout: any) => {
     console.log(stdout);
-  }); 2Code has comments. Press enter to view.
+  });
 }
