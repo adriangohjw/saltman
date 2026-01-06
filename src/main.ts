@@ -140,6 +140,30 @@ async function run(): Promise<void> {
         return;
       }
 
+      // Check if this push is from a merged PR by checking if the commit is associated with any PRs
+      const commitSha = contextValues.commitSha;
+      try {
+        const pullsResponse = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+          owner,
+          repo,
+          commit_sha: commitSha,
+        });
+
+        // If the commit is associated with any pull requests, skip push mode
+        if (pullsResponse.data.length > 0) {
+          core.info(
+            `Push event detected but commit ${commitSha} is associated with pull request(s). Skipping push mode.`,
+          );
+          return;
+        }
+      } catch (error) {
+        // If we can't check the commit, log a warning but continue
+        // This could happen if there are permission issues, but we don't want to fail the entire action
+        core.warning(
+          `Could not verify if commit ${commitSha} is associated with a PR: ${error instanceof Error ? error.message : "Unknown error"}. Proceeding with push mode.`,
+        );
+      }
+
       // Push mode - create GitHub issue
       const headSha = contextValues.commitSha;
       const baseSha = context.payload.before;
