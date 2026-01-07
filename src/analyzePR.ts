@@ -12,6 +12,7 @@ import type { AnalyzePRProps, FileChange, ParsedReview } from "./types";
 import { ReviewResponseSchema } from "./types";
 import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
 import type { GithubInputs } from "./validations/githubInputs";
+import { getModelWithDefault } from "./validations/githubInputs";
 import { estimateMaxTokens } from "./utils/estimateMaxTokens";
 
 interface AnalyzePRWithContextProps
@@ -27,13 +28,14 @@ export interface AnalysisResult {
   allIssues: ParsedReview["issues"];
 }
 
-const callOpenAI = async (apiKey: string, diff: string): Promise<ParsedReview> => {
+const callOpenAI = async (apiKey: string, model: string, diff: string): Promise<ParsedReview> => {
+  core.info(`📡 Calling OpenAI API with model: ${model}`);
   const openai = new OpenAI({
     apiKey: apiKey,
   });
 
   const response = await openai.responses.parse({
-    model: "gpt-5.1-codex-mini",
+    model: model,
     input: [
       {
         role: "system",
@@ -59,13 +61,18 @@ const callOpenAI = async (apiKey: string, diff: string): Promise<ParsedReview> =
   return response.output_parsed as ParsedReview;
 };
 
-const callAnthropic = async (apiKey: string, diff: string): Promise<ParsedReview> => {
+const callAnthropic = async (
+  apiKey: string,
+  model: string,
+  diff: string,
+): Promise<ParsedReview> => {
+  core.info(`📡 Calling Anthropic API with model: ${model}`);
   const anthropic = new Anthropic({
     apiKey: apiKey,
   });
 
   const response = await anthropic.beta.messages.create({
-    model: "claude-opus-4-5",
+    model: model,
     max_tokens: estimateMaxTokens({ diff, defaultMax: 4096 }),
     betas: ["structured-outputs-2025-11-13"],
     system: getSystemMessage(),
@@ -97,6 +104,7 @@ const callOpenAICompatible = async (
   model: string,
   diff: string,
 ): Promise<ParsedReview> => {
+  core.info(`📡 Calling OpenAI-compatible API at ${baseUrl} with model: ${model}`);
   const openaiCompatible = createOpenAICompatible({
     name: "openai-compatible",
     baseURL: baseUrl,
@@ -147,14 +155,15 @@ export const analyzePR = async ({
       .join("\n\n");
 
     // Call the appropriate provider
-    core.info(`Using LLM provider: ${provider}`);
+    const modelWithDefault = getModelWithDefault(provider, model);
+    core.info(`🚀 Starting code analysis with ${provider} using model: ${modelWithDefault}`);
     let parsedReview;
     switch (provider) {
       case "anthropic":
-        parsedReview = await callAnthropic(apiKey, diff);
+        parsedReview = await callAnthropic(apiKey, modelWithDefault, diff);
         break;
       case "openai":
-        parsedReview = await callOpenAI(apiKey, diff);
+        parsedReview = await callOpenAI(apiKey, modelWithDefault, diff);
         break;
       case "openai-compatible":
         if (!baseUrl) {
@@ -169,6 +178,9 @@ export const analyzePR = async ({
         const _exhaustiveCheck: never = provider;
         throw new Error(`Unsupported provider: ${_exhaustiveCheck}`);
     }
+
+    // Log successful API response
+    core.info(`✅ Successfully received response from ${provider} model: ${modelWithDefault}`);
 
     // Log AI response in nicely formatted JSON for debugging
     core.info("=== AI Response (Parsed) ===");

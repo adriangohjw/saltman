@@ -1,6 +1,13 @@
 import * as core from "@actions/core";
 import { z } from "zod";
 
+// Allowed models for each provider
+const OPENAI_MODELS = ["gpt-5.1-codex-mini", "gpt-5.1-codex-max", "gpt-5.2-codex"] as const;
+const DEFAULT_OPENAI_MODEL = "gpt-5.1-codex-mini";
+
+const ANTHROPIC_MODELS = ["claude-sonnet-4-5", "claude-haiku-4-5", "claude-opus-4-5"] as const;
+const DEFAULT_ANTHROPIC_MODEL = "claude-opus-4-5";
+
 const GithubInputsSchema = z
   .object({
     token: z.string().min(1, "No GitHub token provided"),
@@ -101,8 +108,28 @@ const GithubInputsSchema = z
       });
     }
 
-    // base-url and model are required when provider is openai-compatible
-    if (data.provider === "openai-compatible") {
+    // Validate model based on provider
+    if (data.provider === "openai") {
+      if (data.model && !OPENAI_MODELS.includes(data.model as (typeof OPENAI_MODELS)[number])) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid model for OpenAI provider. Allowed models: ${OPENAI_MODELS.join(", ")}. Default: ${DEFAULT_OPENAI_MODEL}`,
+          path: ["model"],
+        });
+      }
+    } else if (data.provider === "anthropic") {
+      if (
+        data.model &&
+        !ANTHROPIC_MODELS.includes(data.model as (typeof ANTHROPIC_MODELS)[number])
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid model for Anthropic provider. Allowed models: ${ANTHROPIC_MODELS.join(", ")}. Default: ${DEFAULT_ANTHROPIC_MODEL}`,
+          path: ["model"],
+        });
+      }
+    } else if (data.provider === "openai-compatible") {
+      // base-url and model are required when provider is openai-compatible
       if (!data.baseUrl) {
         ctx.addIssue({
           code: "custom",
@@ -122,8 +149,40 @@ const GithubInputsSchema = z
 
 export type GithubInputs = z.infer<typeof GithubInputsSchema>;
 
+// Helper function to get the model with default
+export const getModelWithDefault = (
+  provider: "openai" | "anthropic" | "openai-compatible",
+  model: string | undefined,
+): string => {
+  if (model) {
+    return model;
+  }
+  if (provider === "openai") {
+    return DEFAULT_OPENAI_MODEL;
+  }
+  if (provider === "anthropic") {
+    return DEFAULT_ANTHROPIC_MODEL;
+  }
+  // For openai-compatible, model is required (validated in schema)
+  return model!;
+};
+
 export const validateGithubInputs = (inputs: unknown): GithubInputs => {
   const result = GithubInputsSchema.parse(inputs);
+
+  // Log model selection information
+  if (result.provider === "openai" || result.provider === "anthropic") {
+    const modelWithDefault = getModelWithDefault(result.provider, result.model);
+    if (result.model) {
+      core.info(`✓ Using specified model: ${modelWithDefault} for provider: ${result.provider}`);
+    } else {
+      core.info(
+        `✓ Using default model: ${modelWithDefault} for provider: ${result.provider} (no model specified)`,
+      );
+    }
+  } else if (result.provider === "openai-compatible" && result.model) {
+    core.info(`✓ Using model: ${result.model} for provider: ${result.provider}`);
+  }
 
   // Encourage users to use OpenAI if they're using Anthropic
   if (result.provider === "anthropic") {

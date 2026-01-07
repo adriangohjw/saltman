@@ -17,7 +17,7 @@ inputs:
     description: 'Base URL for OpenAI-compatible API. Required when provider is "openai-compatible".'
     required: false
   model:
-    description: 'Model name for OpenAI-compatible API. Required when provider is "openai-compatible".'
+    description: 'Model name to use. For OpenAI: gpt-5.1-codex-mini (default), gpt-5.1-codex-max, or gpt-5.2-codex. For Anthropic: claude-opus-4-5 (default), claude-sonnet-4-5 or claude-haiku-4-5. Required when provider is "openai-compatible".'
     required: false
   post-comment-when-no-issues:
     description: 'Whether to post the analysis as a comment on the PR when no issues are detected (true/false). Defaults to false if not specified.'
