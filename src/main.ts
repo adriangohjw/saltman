@@ -26,6 +26,7 @@ async function run(): Promise<void> {
     const inputIgnorePatterns = core.getInput("ignore-patterns");
     const inputTargetBranch = core.getInput("target-branch");
     const inputPingUsers = core.getInput("ping-users");
+    const inputSeverityFilter = core.getInput("severity-filter");
 
     const {
       token,
@@ -37,6 +38,7 @@ async function run(): Promise<void> {
       ignorePatterns,
       targetBranch,
       pingUsers,
+      severityFilter,
     } = validateGithubInputs({
       token: inputToken,
       provider: inputProvider,
@@ -47,6 +49,7 @@ async function run(): Promise<void> {
       ignorePatterns: inputIgnorePatterns,
       targetBranch: inputTargetBranch,
       pingUsers: inputPingUsers,
+      severityFilter: inputSeverityFilter,
     });
 
     // Initialize GitHub client
@@ -92,6 +95,7 @@ async function run(): Promise<void> {
         baseUrl,
         model,
         pingUsers,
+        severityFilter,
       });
 
       // If no analysis was performed (e.g., no text files), skip posting comments
@@ -217,6 +221,7 @@ async function run(): Promise<void> {
         baseUrl,
         model,
         pingUsers: [pusherUsername, ...(pingUsers ?? [])],
+        severityFilter,
       });
 
       // If no analysis was performed (e.g., no text files), skip creating issue

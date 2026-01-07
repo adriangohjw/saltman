@@ -14,9 +14,12 @@ import { buildAnalysisPrompt, getSystemMessage } from "./prompts";
 import type { GithubInputs } from "./validations/githubInputs";
 import { getModelWithDefault } from "./validations/githubInputs";
 import { estimateMaxTokens } from "./utils/estimateMaxTokens";
+import { filterIssuesBySeverity } from "./filterIssuesBySeverity";
 
 interface AnalyzePRWithContextProps
-  extends AnalyzePRProps, Pick<GithubInputs, "provider" | "baseUrl" | "model" | "pingUsers"> {
+  extends
+    AnalyzePRProps,
+    Pick<GithubInputs, "provider" | "baseUrl" | "model" | "pingUsers" | "severityFilter"> {
   owner: string;
   repo: string;
   headSha: string;
@@ -138,6 +141,7 @@ export const analyzePR = async ({
   baseUrl,
   model,
   pingUsers,
+  severityFilter,
 }: AnalyzePRWithContextProps): Promise<AnalysisResult | null> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
@@ -195,8 +199,20 @@ export const analyzePR = async ({
       };
     }
 
+    const filteredIssues = filterIssuesBySeverity({
+      issues: parsedReview.issues,
+      severityFilter,
+    });
+    if (filteredIssues.length === 0) {
+      return {
+        inlineComments: [],
+        aggregatedComment: null,
+        allIssues: [],
+      };
+    }
+
     // Separate issues by severity
-    const { criticalHigh, mediumLowInfo } = separateIssuesBySeverity(parsedReview.issues);
+    const { criticalHigh, mediumLowInfo } = separateIssuesBySeverity(filteredIssues);
 
     // Generate inline comments for critical/high issues
     const inlineComments = generateInlineComments({
@@ -223,7 +239,7 @@ export const analyzePR = async ({
     return {
       inlineComments,
       aggregatedComment,
-      allIssues: parsedReview.issues,
+      allIssues: filteredIssues,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";

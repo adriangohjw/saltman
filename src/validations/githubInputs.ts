@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import { z } from "zod";
+import { SEVERITY_VALUES } from "../types";
 
 // Allowed models for each provider
 const OPENAI_MODELS = ["gpt-5.1-codex-mini", "gpt-5.1-codex-max", "gpt-5.2-codex"] as const;
@@ -86,6 +87,35 @@ const GithubInputsSchema = z
           .split(/[\s\n]+/)
           .map((item) => item.trim())
           .filter((item) => item.length > 0);
+      }),
+    severityFilter: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (val === undefined || val === "") return true;
+          const items = val
+            .split(/[\s\n]+/)
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+          // All items must be valid severity values
+          return items.every((item) =>
+            SEVERITY_VALUES.includes(item as (typeof SEVERITY_VALUES)[number]),
+          );
+        },
+        {
+          message: `severity-filter: All values must be one of: ${SEVERITY_VALUES.join(", ")}. Invalid values found. Values must be newline-separated.`,
+        },
+      )
+      .transform((val) => {
+        if (val === undefined || val === "") return undefined;
+        // Split by newline only, normalize to lowercase, filter out empty strings
+        const items = val
+          .split(/[\s\n]+/)
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0);
+        // Return as array of valid severity values
+        return items as (typeof SEVERITY_VALUES)[number][];
       }),
   })
   .superRefine((data, ctx) => {
