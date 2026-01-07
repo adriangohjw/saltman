@@ -63,6 +63,7 @@ jobs:
 - **PR Mode**: Triggers on PR creation and when new commits are pushed to a PR
   - Posts inline comments for critical/high severity issues
   - Posts aggregated comments for medium/low/info issues
+  - Supports configurable pings via `ping-users` input
 - **Push Mode**: Triggers on direct pushes to a specific branch
   - Creates one GitHub issue per finding when any findings are detected (all severities)
   - Automatically pings the commit pusher
@@ -137,6 +138,9 @@ jobs:
           api-key: ${{ secrets.OPENAI_API_KEY }}  # API key for the specified provider
           model: gpt-5.1-codex-max  # Optional: choose model (defaults to gpt-5.1-codex-mini for OpenAI, claude-opus-4-5 for Anthropic)
           post-comment-when-no-issues: true  # Optional: set to true to post analysis as PR comment when no issues are detected (defaults to false)
+          ping-users: |  # Optional: users/teams to ping in PR comments
+            @team/security
+            @security-leads
           ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
             **/*.test.ts
             **/*.spec.ts
@@ -178,7 +182,7 @@ jobs:
           provider: openai  # Must be either "openai", "anthropic", or "openai-compatible". OpenAI is recommended.
           api-key: ${{ secrets.OPENAI_API_KEY }}  # API key for the specified provider
           target-branch: main  # Required for push mode: branch to monitor
-          ping-users: |  # Optional: additional users/teams to ping in push mode
+          ping-users: |  # Optional: users/teams to ping (works in both PR and push modes)
             @team/security
             @security-leads
           ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
@@ -262,7 +266,7 @@ jobs:
 | `model` | Optional | Both | Model name to use. For OpenAI: `gpt-5.1-codex-mini` (default), `gpt-5.1-codex-max`, or `gpt-5.2-codex`. For Anthropic: `claude-sonnet-4-5`, `claude-haiku-4-5`, or `claude-opus-4-5` (default). Required when `provider` is `"openai-compatible"`. |
 | `post-comment-when-no-issues` | ❌ No | PR only | Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false`. **Mutually exclusive with `target-branch`**. |
 | `target-branch` | ❌ No | Push only | Branch name to monitor for direct pushes. When set and action is triggered on a push event, creates a GitHub issue instead of PR comments. The action will only run when someone pushes directly to this branch. **Mutually exclusive with `post-comment-when-no-issues`**. |
-| `ping-users` | ❌ No | Push only | Space or newline-separated list of GitHub usernames or teams to ping in push mode when creating issues. All items must start with `@`. These will be added to the issue footer along with the commit pusher. All mentions are automatically deduplicated. |
+| `ping-users` | ❌ No | Both | Space or newline-separated list of GitHub usernames or teams to ping. All items must start with `@`. In PR mode, these are added to PR comment footers. In push mode, these are added to issue footers along with the commit pusher. All mentions are automatically deduplicated. |
 | `ignore-patterns` | ❌ No | Both | Newline-separated list of glob patterns to exclude files from analysis. Similar to `.eslintignore` or `.gitignore` patterns. Files matching any pattern will be skipped during analysis. |
 
 **Examples:**
@@ -289,6 +293,7 @@ The mode is determined by the GitHub event that triggers the action:
 
 - **PR Mode**: Triggered by `pull_request` events (e.g., `on: pull_request: types: [opened, synchronize]`). Creates PR comments.
   - Use `post-comment-when-no-issues` to optionally post a comment when no issues are detected
+  - Use `ping-users` to ping specific users/teams in PR comments (all severities)
 - **Push Mode**: Triggered by `push` events (e.g., `on: push: branches: [main]`). Creates GitHub issues.
   - Use `target-branch` to specify which branch to monitor (the action only runs when the pushed branch matches)
   - In push mode, the action automatically:
