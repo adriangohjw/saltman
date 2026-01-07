@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import * as core from "@actions/core";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateText, Output } from "ai";
+import { generateObject } from "ai";
 import { separateIssuesBySeverity } from "./responses/format";
 import { generateInlineComments, type InlineComment } from "./responses/inline";
 import { formatAggregatedComment } from "./responses/aggregated";
@@ -109,24 +109,23 @@ const callOpenAICompatible = async (
     name: "openai-compatible",
     baseURL: baseUrl,
     apiKey: apiKey,
+    supportsStructuredOutputs: true,
   });
 
-  const { text } = await generateText({
+  const { object } = await generateObject({
     model: openaiCompatible.chatModel(model),
     system: getSystemMessage(),
     prompt: buildAnalysisPrompt(diff),
-    experimental_output: Output.object({
-      schema: ReviewResponseSchema,
-    }),
+    schema: ReviewResponseSchema,
   });
 
-  if (!text) {
+  if (!object) {
     throw new Error(
       "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
     );
   }
 
-  return ReviewResponseSchema.parse(JSON.parse(text));
+  return object as ParsedReview;
 };
 
 export const analyzePR = async ({
