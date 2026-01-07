@@ -135,6 +135,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           provider: openai  # Must be either "openai", "anthropic", or "openai-compatible". OpenAI is recommended.
           api-key: ${{ secrets.OPENAI_API_KEY }}  # API key for the specified provider
+          model: gpt-5.1-codex-max  # Optional: choose model (defaults to gpt-5.1-codex-mini for OpenAI, claude-opus-4-5 for Anthropic)
           post-comment-when-no-issues: true  # Optional: set to true to post analysis as PR comment when no issues are detected (defaults to false)
           ignore-patterns: |  # Optional: exclude files from analysis using glob patterns
             **/*.test.ts
@@ -188,6 +189,34 @@ jobs:
 
 **Note:** Replace `adriangohjw/saltman@main` with your own repository path. Using `@main` will always use the latest commit on the main branch.
 
+### Model Selection
+
+You can optionally specify which model to use for OpenAI and Anthropic providers:
+
+**OpenAI Models:**
+- `gpt-5.1-codex-mini` (default) - Fastest and most cost-effective
+- `gpt-5.1-codex-max` - More powerful, better for complex codebases
+- `gpt-5.2-codex` - Latest model with enhanced capabilities
+
+**Anthropic Models:**
+- `claude-opus-4-5` (default) - Most capable model
+- `claude-sonnet-4-5` - Balanced performance and speed
+- `claude-haiku-4-5` - Fastest and most cost-effective
+
+Example with model selection:
+
+```yaml
+- name: Run Saltman
+  uses: adriangohjw/saltman@main
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    provider: openai
+    api-key: ${{ secrets.OPENAI_API_KEY }}
+    model: gpt-5.1-codex-max  # Optional: choose a specific model
+```
+
+If you don't specify a model, the default will be used (`gpt-5.1-codex-mini` for OpenAI, `claude-opus-4-5` for Anthropic).
+
 ### OpenAI-Compatible Provider
 
 You can use any OpenAI-compatible API provider (e.g., local models, self-hosted solutions, or other cloud providers):
@@ -230,7 +259,7 @@ jobs:
 | `provider` | ✅ Yes | Both | LLM provider to use for code review. Must be either `"openai"`, `"anthropic"`, or `"openai-compatible"`. **OpenAI is recommended** for better performance and reliability. |
 | `api-key` | ✅ Yes | Both | API key for the specified LLM provider. Store this as a secret in your repository settings (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or your custom provider's API key). |
 | `base-url` | Conditional | Both | Required when `provider` is `"openai-compatible"`. Base URL for your OpenAI-compatible API endpoint (e.g., `https://api.example.com/v1` or `http://localhost:1234/v1`). |
-| `model` | Conditional | Both | Required when `provider` is `"openai-compatible"`. Model name to use with your OpenAI-compatible provider (e.g., `"gpt-4"`, `"gpt-3.5-turbo"`, or your custom model name). |
+| `model` | Optional | Both | Model name to use. For OpenAI: `gpt-5.1-codex-mini` (default), `gpt-5.1-codex-max`, or `gpt-5.2-codex`. For Anthropic: `claude-sonnet-4-5`, `claude-haiku-4-5`, or `claude-opus-4-5` (default). Required when `provider` is `"openai-compatible"`. |
 | `post-comment-when-no-issues` | ❌ No | PR only | Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false`. **Mutually exclusive with `target-branch`**. |
 | `target-branch` | ❌ No | Push only | Branch name to monitor for direct pushes. When set and action is triggered on a push event, creates a GitHub issue instead of PR comments. The action will only run when someone pushes directly to this branch. **Mutually exclusive with `post-comment-when-no-issues`**. |
 | `ping-users` | ❌ No | Push only | Space or newline-separated list of GitHub usernames or teams to ping in push mode when creating issues. All items must start with `@`. These will be added to the issue footer along with the commit pusher. All mentions are automatically deduplicated. |
