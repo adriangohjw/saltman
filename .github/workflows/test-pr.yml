@@ -23,6 +23,8 @@ jobs:
           provider: openai
           api-key: ${{ secrets.OPENAI_API_KEY }}
           post-comment-when-no-issues: true
+          ping-users: |
+            @adriangohjw
           ignore-patterns: |
             **/*.md
             package.json
