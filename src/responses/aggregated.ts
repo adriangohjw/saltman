@@ -9,8 +9,9 @@ import {
   formatExplanation,
   formatSolution,
 } from "./format";
+import type { GithubInputs } from "../validations/githubInputs";
 
-interface FormatAggregatedCommentProps {
+interface FormatAggregatedCommentProps extends Pick<GithubInputs, "pingUsers"> {
   issues: ParsedReview["issues"];
   owner: string;
   repo: string;
@@ -25,6 +26,7 @@ export const formatAggregatedComment = ({
   repo,
   headSha,
   hasCriticalHighIssues,
+  pingUsers,
 }: FormatAggregatedCommentProps): string | null => {
   if (issues.length === 0) {
     return null;
@@ -65,7 +67,7 @@ export const formatAggregatedComment = ({
     output += formatSolution({ suggestion: issue.suggestion, codeSnippet: issue.codeSnippet });
   });
 
-  output += getSaltmanFooter({ owner, repo, commitSha: headSha });
+  output += getSaltmanFooter({ owner, repo, commitSha: headSha, pingUsers });
 
   return output;
 };

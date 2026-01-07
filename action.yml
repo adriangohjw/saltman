@@ -29,7 +29,7 @@ inputs:
     description: 'Branch name to monitor for direct pushes. When set and action is triggered on push event, creates a GitHub issue instead of PR comments. Only used when triggered on push events.'
     required: false
   ping-users:
-    description: 'Space or newline-separated list of GitHub usernames or teams to ping in push mode (e.g., "@team/security @user1 @user2"). Only used in push mode when creating issues.'
+    description: 'Space or newline-separated list of GitHub usernames or teams to ping (e.g., "@team/security @user1 @user2"). All items must start with "@".'
     required: false
 runs:
   using: 'composite'

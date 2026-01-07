@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GithubInputs } from "../validations/githubInputs";
 
 const SALTMAN_REPO_URL = "https://github.com/adriangohjw/saltman";
 const SHORT_SHA_LENGTH = 7;
@@ -9,11 +10,10 @@ const pingUsersSchema = z
   .optional()
   .default([]);
 
-interface GetSaltmanFooterProps {
+interface GetSaltmanFooterProps extends Pick<GithubInputs, "pingUsers"> {
   owner: string;
   repo: string;
   commitSha?: string;
-  pingUsers?: string[];
 }
 
 export const getSaltmanFooter = ({

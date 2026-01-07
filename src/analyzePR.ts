@@ -16,7 +16,7 @@ import { getModelWithDefault } from "./validations/githubInputs";
 import { estimateMaxTokens } from "./utils/estimateMaxTokens";
 
 interface AnalyzePRWithContextProps
-  extends AnalyzePRProps, Pick<GithubInputs, "provider" | "baseUrl" | "model"> {
+  extends AnalyzePRProps, Pick<GithubInputs, "provider" | "baseUrl" | "model" | "pingUsers"> {
   owner: string;
   repo: string;
   headSha: string;
@@ -138,6 +138,7 @@ export const analyzePR = async ({
   provider,
   baseUrl,
   model,
+  pingUsers,
 }: AnalyzePRWithContextProps): Promise<AnalysisResult | null> => {
   // Filter out files without patches (binary files, etc.)
   const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
@@ -199,7 +200,13 @@ export const analyzePR = async ({
     const { criticalHigh, mediumLowInfo } = separateIssuesBySeverity(parsedReview.issues);
 
     // Generate inline comments for critical/high issues
-    const inlineComments = generateInlineComments({ issues: criticalHigh, owner, repo, headSha });
+    const inlineComments = generateInlineComments({
+      issues: criticalHigh,
+      owner,
+      repo,
+      headSha,
+      pingUsers,
+    });
 
     // Generate aggregated comment for medium/low/info issues
     const aggregatedComment =
@@ -210,6 +217,7 @@ export const analyzePR = async ({
             repo,
             headSha,
             hasCriticalHighIssues: criticalHigh.length > 0,
+            pingUsers,
           })
         : null;
 

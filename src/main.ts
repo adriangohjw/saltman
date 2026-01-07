@@ -91,6 +91,7 @@ async function run(): Promise<void> {
         provider,
         baseUrl,
         model,
+        pingUsers,
       });
 
       // If no analysis was performed (e.g., no text files), skip posting comments
@@ -147,7 +148,7 @@ async function run(): Promise<void> {
           owner,
           repo,
           issue_number: prNumber!,
-          body: `## Saltman Code Review\n\nNo issues detected! 🎉\n\n${getSaltmanFooter({ owner, repo, commitSha: headSha })}`,
+          body: `## Saltman Code Review\n\nNo issues detected! 🎉\n\n${getSaltmanFooter({ owner, repo, commitSha: headSha, pingUsers })}`,
         });
       }
 
@@ -215,6 +216,7 @@ async function run(): Promise<void> {
         provider,
         baseUrl,
         model,
+        pingUsers: [pusherUsername, ...(pingUsers ?? [])],
       });
 
       // If no analysis was performed (e.g., no text files), skip creating issue

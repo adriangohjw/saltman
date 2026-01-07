@@ -7,6 +7,7 @@ import {
   formatExplanation,
   formatSolution,
 } from "./format";
+import type { GithubInputs } from "../validations/githubInputs";
 
 // Inline comment (always uses startLine and endLine, even for single-line issues)
 export interface InlineComment {
@@ -16,7 +17,7 @@ export interface InlineComment {
   body: string;
 }
 
-interface FormatInlineCommentProps {
+interface FormatInlineCommentProps extends Pick<GithubInputs, "pingUsers"> {
   issue: ParsedReview["issues"][0];
   owner: string;
   repo: string;
@@ -24,7 +25,13 @@ interface FormatInlineCommentProps {
 }
 
 // Format a single issue for inline comment (concise and actionable)
-const formatInlineComment = ({ issue, owner, repo, headSha }: FormatInlineCommentProps): string => {
+const formatInlineComment = ({
+  issue,
+  owner,
+  repo,
+  headSha,
+  pingUsers,
+}: FormatInlineCommentProps): string => {
   let output = `### ${getSeverityEmoji(issue.severity)} ${issue.title}\n\n`;
 
   // Build metadata line
@@ -39,7 +46,7 @@ const formatInlineComment = ({ issue, owner, repo, headSha }: FormatInlineCommen
 
   output += formatSolution({ suggestion: issue.suggestion, codeSnippet: issue.codeSnippet });
 
-  output += getSaltmanFooter({ owner, repo, commitSha: headSha });
+  output += getSaltmanFooter({ owner, repo, commitSha: headSha, pingUsers });
 
   return output;
 };
@@ -49,6 +56,7 @@ interface GenerateInlineCommentsProps {
   owner: string;
   repo: string;
   headSha: string;
+  pingUsers?: string[];
 }
 
 // Generate inline comments for critical/high issues
@@ -57,6 +65,7 @@ export const generateInlineComments = ({
   owner,
   repo,
   headSha,
+  pingUsers,
 }: GenerateInlineCommentsProps): InlineComment[] => {
   const inlineComments: InlineComment[] = [];
 
@@ -73,7 +82,7 @@ export const generateInlineComments = ({
         path: issue.location.file,
         startLine: issue.location.startLine,
         endLine,
-        body: formatInlineComment({ issue, owner, repo, headSha }),
+        body: formatInlineComment({ issue, owner, repo, headSha, pingUsers }),
       });
     }
   });
