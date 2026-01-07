@@ -72,6 +72,7 @@ jobs:
   - Only runs when the pushed branch matches the specified `target-branch`
 - **AI-powered security code review** using OpenAI (recommended), Anthropic Claude Opus, or any OpenAI-compatible API provider - focused on identifying security vulnerabilities and risks
 - **File ignore patterns** - Exclude files from analysis using glob patterns (similar to `.eslintignore` or `.gitignore`)
+- **Severity filtering** - Filter issues by severity level (critical, high, medium, low, info) to focus on specific risk levels
 
 ## Tech Stack
 
@@ -146,6 +147,9 @@ jobs:
             **/*.spec.ts
             **/node_modules/**
             examples/**
+          severity-filter: |  # Optional: only show specific severity levels (defaults to all if unspecified)
+            critical
+            high
 ```
 
 ### Push Mode (Create Issues)
@@ -189,6 +193,9 @@ jobs:
             **/*.md
             package.json
             bun.lockb
+          severity-filter: |  # Optional: only show specific severity levels (defaults to all if unspecified)
+            critical
+            high
 ```
 
 **Note:** Replace `adriangohjw/saltman@v1` with your own repository path. Using `@v1` will use the v1 tag, providing a stable version reference.
@@ -268,6 +275,7 @@ jobs:
 | `target-branch` | ❌ No | Push only | Branch name to monitor for direct pushes. When set and action is triggered on a push event, creates a GitHub issue instead of PR comments. The action will only run when someone pushes directly to this branch. **Mutually exclusive with `post-comment-when-no-issues`**. |
 | `ping-users` | ❌ No | Both | Space or newline-separated list of GitHub usernames or teams to ping. All items must start with `@`. In PR mode, these are added to PR comment footers. In push mode, these are added to issue footers along with the commit pusher. All mentions are automatically deduplicated. |
 | `ignore-patterns` | ❌ No | Both | Newline-separated list of glob patterns to exclude files from analysis. Similar to `.eslintignore` or `.gitignore` patterns. Files matching any pattern will be skipped during analysis. |
+| `severity-filter` | ❌ No | Both | Space or newline-separated list of severity levels to include in the review. Valid values: `critical`, `high`, `medium`, `low`, `info`. If unspecified, all severities are shown. All values must be valid severity levels. |
 
 **Examples:**
 
@@ -285,6 +293,11 @@ ignore-patterns: |
   **/node_modules/**
   examples/**
   *.md
+
+# severity-filter example (only show critical and high severity issues)
+severity-filter: |
+  critical
+  high
 ```
 
 **Mode Selection:**
