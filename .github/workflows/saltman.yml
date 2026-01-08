@@ -1,0 +1,55 @@
+name: 🔒 Saltman
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  pr-review:
+    name: "PR"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Saltman Action
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          provider: openai
+          api-key: ${{ secrets.OPENAI_API_KEY }}
+          post-comment-when-no-issues: true
+          ignore-patterns: |
+            **/*.md
+            package.json
+            bun.lockb
+
+  push-review:
+    name: "Push"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Saltman Action
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          provider: openai
+          api-key: ${{ secrets.OPENAI_API_KEY }}
+          target-branch: main
+          ignore-patterns: |
+            **/*.md
+            package.json
+            bun.lockb
