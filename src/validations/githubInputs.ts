@@ -44,6 +44,17 @@ const GithubInputsSchema = z
         if (val === undefined || val === "") return undefined;
         return val === "true";
       }),
+    structuredOutputs: z
+      .string()
+      .optional()
+      .refine(
+        (val) => val === undefined || val === "" || val === "true" || val === "false",
+        "structured-outputs must be 'true' or 'false' if specified",
+      )
+      .transform((val) => {
+        if (val === undefined || val === "") return true; // Default to true
+        return val === "true";
+      }),
     targetBranch: z
       .string()
       .optional()

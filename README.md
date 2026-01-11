@@ -258,9 +258,32 @@ jobs:
           api-key: ${{ secrets.OPENAI_COMPATIBLE_API_KEY }}  # API key for your provider
           base-url: https://api.example.com/v1  # Base URL for your OpenAI-compatible API
           model: gpt-4  # Model name to use (e.g., "gpt-4", "gpt-3.5-turbo", or your custom model name)
+          structured-outputs: false  # Optional: set to false if your provider doesn't support structured outputs (defaults to true)
 ```
 
 **Note:** When using `provider: openai-compatible`, both `base-url` and `model` are required.
+
+**Structured Outputs vs JSON Mode:**
+
+By default, the action uses structured outputs (modern OpenAI-compatible APIs) for more reliable parsing. If your provider doesn't support structured outputs, set `structured-outputs: false` to use JSON mode instead:
+
+```yaml
+# Example with a provider that doesn't support structured outputs
+- name: Run Saltman
+  uses: adriangohjw/saltman@v1
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    provider: openai-compatible
+    api-key: ${{ secrets.YOUR_PROVIDER_API_KEY }}
+    base-url: https://your-provider.com/v1
+    model: your-model-name
+    structured-outputs: false  # Use JSON mode instead of structured outputs
+```
+
+Most modern OpenAI-compatible providers support structured outputs. Only set this to `false` if you encounter errors related to structured output parsing. 
+
+Known providers that do not support structured outputs:
+- Z.ai (e.g. GLM-4.7)
 
 ### Inputs
 
@@ -271,6 +294,7 @@ jobs:
 | `api-key` | ✅ Yes | Both | API key for the specified LLM provider. Store this as a secret in your repository settings (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or your custom provider's API key). |
 | `base-url` | Conditional | Both | Required when `provider` is `"openai-compatible"`. Base URL for your OpenAI-compatible API endpoint (e.g., `https://api.example.com/v1` or `http://localhost:1234/v1`). |
 | `model` | Optional | Both | Model name to use. For OpenAI: `gpt-5.1-codex-mini` (default), `gpt-5.1-codex-max`, or `gpt-5.2-codex`. For Anthropic: `claude-sonnet-4-5`, `claude-haiku-4-5`, or `claude-opus-4-5` (default). Required when `provider` is `"openai-compatible"`. |
+| `structured-outputs` | ❌ No | Both | Whether to use structured outputs (default) or JSON mode for OpenAI-compatible providers. Must be `true` or `false` if specified. Defaults to `true`. Set to `false` if your provider does not support structured outputs (e.g., some older OpenAI-compatible APIs). Using JSON mode may be less reliable than structured outputs. |
 | `post-comment-when-no-issues` | ❌ No | PR only | Whether to post the analysis as a comment on the PR when no issues are detected. Must be `true` or `false` if specified. Defaults to `false`. **Mutually exclusive with `target-branch`**. |
 | `target-branch` | ❌ No | Push only | Branch name to monitor for direct pushes. When set and action is triggered on a push event, creates a GitHub issue instead of PR comments. The action will only run when someone pushes directly to this branch. **Mutually exclusive with `post-comment-when-no-issues`**. |
 | `ping-users` | ❌ No | Both | Space or newline-separated list of GitHub usernames or teams to ping. All items must start with `@`. In PR mode, these are added to PR comment footers. In push mode, these are added to issue footers along with the commit pusher. All mentions are automatically deduplicated. |

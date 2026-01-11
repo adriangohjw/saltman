@@ -27,6 +27,7 @@ async function run(): Promise<void> {
     const inputTargetBranch = core.getInput("target-branch");
     const inputPingUsers = core.getInput("ping-users");
     const inputSeverityFilter = core.getInput("severity-filter");
+    const inputStructuredOutputs = core.getInput("structured-outputs");
 
     const {
       token,
@@ -39,6 +40,7 @@ async function run(): Promise<void> {
       targetBranch,
       pingUsers,
       severityFilter,
+      structuredOutputs,
     } = validateGithubInputs({
       token: inputToken,
       provider: inputProvider,
@@ -50,6 +52,7 @@ async function run(): Promise<void> {
       targetBranch: inputTargetBranch,
       pingUsers: inputPingUsers,
       severityFilter: inputSeverityFilter,
+      structuredOutputs: inputStructuredOutputs,
     });
 
     // Initialize GitHub client
@@ -96,6 +99,7 @@ async function run(): Promise<void> {
         model,
         pingUsers,
         severityFilter,
+        structuredOutputs,
       });
 
       // If no analysis was performed (e.g., no text files), skip posting comments
@@ -222,6 +226,7 @@ async function run(): Promise<void> {
         model,
         pingUsers: [pusherUsername, ...(pingUsers ?? [])],
         severityFilter,
+        structuredOutputs,
       });
 
       // If no analysis was performed (e.g., no text files), skip creating issue

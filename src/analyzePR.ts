@@ -15,11 +15,19 @@ import type { GithubInputs } from "./validations/githubInputs";
 import { getModelWithDefault } from "./validations/githubInputs";
 import { estimateMaxTokens } from "./utils/estimateMaxTokens";
 import { filterIssuesBySeverity } from "./filterIssuesBySeverity";
+import { sanitizeReviewResponse } from "./utils/sanitizeReviewResponse";
 
 interface AnalyzePRWithContextProps
-  extends
-    AnalyzePRProps,
-    Pick<GithubInputs, "provider" | "baseUrl" | "model" | "pingUsers" | "severityFilter"> {
+  extends AnalyzePRProps,
+    Pick<
+      GithubInputs,
+      | "provider"
+      | "baseUrl"
+      | "model"
+      | "pingUsers"
+      | "severityFilter"
+      | "structuredOutputs"
+    > {
   owner: string;
   repo: string;
   headSha: string;
@@ -31,7 +39,11 @@ export interface AnalysisResult {
   allIssues: ParsedReview["issues"];
 }
 
-const callOpenAI = async (apiKey: string, model: string, diff: string): Promise<ParsedReview> => {
+const callOpenAI = async (
+  apiKey: string,
+  model: string,
+  diff: string
+): Promise<ParsedReview> => {
   core.info(`📡 Calling OpenAI API with model: ${model}`);
   const openai = new OpenAI({
     apiKey: apiKey,
@@ -57,7 +69,7 @@ const callOpenAI = async (apiKey: string, model: string, diff: string): Promise<
   // Check if output_parsed is null (can happen when model refuses or parsing fails)
   if (response.output_parsed === null) {
     throw new Error(
-      "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
+      "Model response could not be parsed. The model may have refused to respond or the response format was invalid."
     );
   }
 
@@ -67,7 +79,7 @@ const callOpenAI = async (apiKey: string, model: string, diff: string): Promise<
 const callAnthropic = async (
   apiKey: string,
   model: string,
-  diff: string,
+  diff: string
 ): Promise<ParsedReview> => {
   core.info(`📡 Calling Anthropic API with model: ${model}`);
   const anthropic = new Anthropic({
@@ -89,10 +101,11 @@ const callAnthropic = async (
   });
 
   // Parse the JSON response from the text content
-  const responseText = response.content[0]?.type === "text" ? response.content[0].text : null;
+  const responseText =
+    response.content[0]?.type === "text" ? response.content[0].text : null;
   if (!responseText) {
     throw new Error(
-      "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
+      "Model response could not be parsed. The model may have refused to respond or the response format was invalid."
     );
   }
 
@@ -101,13 +114,15 @@ const callAnthropic = async (
   return ReviewResponseSchema.parse(parsed);
 };
 
-const callOpenAICompatible = async (
+const callOpenAICompatibleStructured = async (
   apiKey: string,
   baseUrl: string,
   model: string,
-  diff: string,
+  diff: string
 ): Promise<ParsedReview> => {
-  core.info(`📡 Calling OpenAI-compatible API at ${baseUrl} with model: ${model}`);
+  core.info(
+    `📡 Calling OpenAI-compatible API at ${baseUrl} with model: ${model}`
+  );
   const openaiCompatible = createOpenAICompatible({
     name: "openai-compatible",
     baseURL: baseUrl,
@@ -124,11 +139,69 @@ const callOpenAICompatible = async (
 
   if (!object) {
     throw new Error(
-      "Model response could not be parsed. The model may have refused to respond or the response format was invalid.",
+      "Model response could not be parsed. The model may have refused to respond or the response format was invalid."
     );
   }
 
   return object as ParsedReview;
+};
+
+const callOpenAICompatibleNonStructured = async (
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  diff: string
+): Promise<ParsedReview> => {
+  core.info(
+    `📡 Calling OpenAI-compatible API at ${baseUrl} with model: ${model} (JSON mode)`
+  );
+  core.info(`🔄 Using native OpenAI SDK with JSON mode`);
+
+  const openai = new OpenAI({
+    apiKey: apiKey,
+    baseURL: baseUrl,
+  });
+
+  const response = await openai.chat.completions.create({
+    model: model,
+    messages: [
+      {
+        role: "system",
+        content: getSystemMessage({ includeVerboseJsonInstructions: true }),
+      },
+      {
+        role: "user",
+        content: buildAnalysisPrompt(diff),
+      },
+    ],
+    response_format: { type: "json_object" },
+  });
+
+  const content =
+    response.choices[0]?.message?.content ||
+    (response.choices[0]?.message as any)?.reasoning_content;
+  if (!content) {
+    throw new Error("Model response was empty or invalid.");
+  }
+
+  const parsed = JSON.parse(content);
+  // Sanitize the response to fix invalid enum values (e.g., securityCategory arrays)
+  const sanitized = sanitizeReviewResponse(parsed);
+  return ReviewResponseSchema.parse(sanitized);
+};
+
+const callOpenAICompatible = async (
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  diff: string,
+  structuredOutputs: boolean
+): Promise<ParsedReview> => {
+  if (structuredOutputs) {
+    return callOpenAICompatibleStructured(apiKey, baseUrl, model, diff);
+  } else {
+    return callOpenAICompatibleNonStructured(apiKey, baseUrl, model, diff);
+  }
 };
 
 export const analyzePR = async ({
@@ -142,9 +215,12 @@ export const analyzePR = async ({
   model,
   pingUsers,
   severityFilter,
+  structuredOutputs,
 }: AnalyzePRWithContextProps): Promise<AnalysisResult | null> => {
   // Filter out files without patches (binary files, etc.)
-  const filesWithPatches = files.filter((file: FileChange) => file.patch && file.patch.length > 0);
+  const filesWithPatches = files.filter(
+    (file: FileChange) => file.patch && file.patch.length > 0
+  );
 
   // No text-based files to review - return null (no analysis performed)
   if (filesWithPatches.length === 0) {
@@ -155,12 +231,17 @@ export const analyzePR = async ({
     // Convert file changes to a single diff string
     // Include filename so LLM knows which file each diff belongs to
     const diff = filesWithPatches
-      .map((file: FileChange) => `--- a/${file.filename}\n+++ b/${file.filename}\n${file.patch}`)
+      .map(
+        (file: FileChange) =>
+          `--- a/${file.filename}\n+++ b/${file.filename}\n${file.patch}`
+      )
       .join("\n\n");
 
     // Call the appropriate provider
     const modelWithDefault = getModelWithDefault(provider, model);
-    core.info(`🚀 Starting code analysis with ${provider} using model: ${modelWithDefault}`);
+    core.info(
+      `🚀 Starting code analysis with ${provider} using model: ${modelWithDefault}`
+    );
     let parsedReview;
     switch (provider) {
       case "anthropic":
@@ -171,12 +252,22 @@ export const analyzePR = async ({
         break;
       case "openai-compatible":
         if (!baseUrl) {
-          throw new Error('base-url is required when provider is "openai-compatible"');
+          throw new Error(
+            'base-url is required when provider is "openai-compatible"'
+          );
         }
         if (!model) {
-          throw new Error('model is required when provider is "openai-compatible"');
+          throw new Error(
+            'model is required when provider is "openai-compatible"'
+          );
         }
-        parsedReview = await callOpenAICompatible(apiKey, baseUrl, model, diff);
+        parsedReview = await callOpenAICompatible(
+          apiKey,
+          baseUrl,
+          model,
+          diff,
+          structuredOutputs
+        );
         break;
       default:
         const _exhaustiveCheck: never = provider;
@@ -184,7 +275,9 @@ export const analyzePR = async ({
     }
 
     // Log successful API response
-    core.info(`✅ Successfully received response from ${provider} model: ${modelWithDefault}`);
+    core.info(
+      `✅ Successfully received response from ${provider} model: ${modelWithDefault}`
+    );
 
     // Log AI response in nicely formatted JSON for debugging
     core.info("=== AI Response (Parsed) ===");
@@ -212,7 +305,8 @@ export const analyzePR = async ({
     }
 
     // Separate issues by severity
-    const { criticalHigh, mediumLowInfo } = separateIssuesBySeverity(filteredIssues);
+    const { criticalHigh, mediumLowInfo } =
+      separateIssuesBySeverity(filteredIssues);
 
     // Generate inline comments for critical/high issues
     const inlineComments = generateInlineComments({
@@ -242,7 +336,8 @@ export const analyzePR = async ({
       allIssues: filteredIssues,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error(`${provider} API error: ${errorMessage}`);
 
     // Re-throw the error so CI fails when there's an API error
