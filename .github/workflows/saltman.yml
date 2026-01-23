@@ -10,7 +10,7 @@ jobs:
   pr-review:
     name: "PR"
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     permissions:
       pull-requests: write
       contents: read
@@ -34,7 +34,7 @@ jobs:
   push-review:
     name: "Push"
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.actor != 'dependabot[bot]'
     permissions:
       contents: read
       issues: write
