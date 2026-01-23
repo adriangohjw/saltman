@@ -22,7 +22,7 @@
     "@actions/github": "^6.0.1",
     "@ai-sdk/openai-compatible": "^2.0.15",
     "@anthropic-ai/sdk": "^0.71.2",
-    "ai": "^6.0.42",
+    "ai": "^6.0.48",
     "minimatch": "^10.1.1",
     "openai": "^6.16.0",
     "zod": "^4.3.5"
