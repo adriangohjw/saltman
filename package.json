@@ -25,7 +25,7 @@
     "ai": "^6.0.42",
     "minimatch": "^10.1.1",
     "openai": "^6.16.0",
-    "zod": "^4.3.5"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^25.0.9",
