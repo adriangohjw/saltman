@@ -18,7 +18,7 @@
   "author": "adriangohjw",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^2.0.2",
+    "@actions/core": "^3.0.0",
     "@actions/github": "^6.0.1",
     "@ai-sdk/openai-compatible": "^2.0.15",
     "@anthropic-ai/sdk": "^0.73.0",
