@@ -24,7 +24,7 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "ai": "^6.0.62",
     "minimatch": "^10.1.1",
-    "openai": "^6.16.0",
+    "openai": "^6.17.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {
