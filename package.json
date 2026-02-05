@@ -21,7 +21,7 @@
     "@actions/core": "^2.0.2",
     "@actions/github": "^6.0.1",
     "@ai-sdk/openai-compatible": "^2.0.15",
-    "@anthropic-ai/sdk": "^0.71.2",
+    "@anthropic-ai/sdk": "^0.73.0",
     "ai": "^6.0.62",
     "minimatch": "^10.1.1",
     "openai": "^6.17.0",
