@@ -1,3 +1,7 @@
+> Project has been deprecated. Refer to [v2 implementation](https://www.hack.gov.sg/2026/open47/) done by me during my hackathon at Open Government Products in 2026.
+
+---
+
 # Saltman
 
 A GitHub Action that analyzes code changes for security vulnerabilities and posts findings as PR comments or GitHub issues.
